@@ -19,15 +19,22 @@ module vga_test(
                 C_V_BACK_PORCH   = 23,
                 C_V_ACTIVE_TIME  = 600,
                 C_V_FRONT_PORCH  = 1,
-                C_V_FRAME_PERIOD = 623;
+                C_V_FRAME_PERIOD = 628;
 
     reg [10:0] hCnt; // Hori Counter
     reg [10:0] vCnt; // Vert Counter
-    reg clkVga; // VGA clock, 40MHz
+    wire clkVga; // VGA clock, 40MHz
     wire isActive;
-    reg [11:0] image [799:0][599:0];
+    //reg [11:0] image [799:0][599:0];
 
-
+    clk_wiz_40m clk_inst
+   (
+        .clk_in1(iBusClk),
+        .clk_out1(clkVga),
+        .resetn(iRstN), // input resetn
+        .locked()
+    );
+//    assign clkVga = iBusClk;
     // Hori
     always @ (posedge clkVga or negedge iRstN) begin
         if (!iRstN || hCnt == C_H_LINE_PERIOD - 1)
@@ -40,7 +47,7 @@ module vga_test(
 
 
     //Vert
-    always @ (posedge clkVga or negedge iRstN) begin
+    always @ (posedge oHs or negedge iRstN) begin
         if (!iRstN || vCnt == C_V_FRAME_PERIOD - 1)
             vCnt <= 11'd0;
         else
@@ -61,9 +68,20 @@ module vga_test(
             oBlue <= 4'b0000;
         end
         else if (isActive) begin
-            oRed <= image[hCnt][vCnt][3:0];
-            oGreen <= image[hCnt][vCnt][7:4];
-            oBlue <= image[hCnt][vCnt][11:8];
+            oRed <= hCnt / 50;
+            oBlue <= hCnt / 50;
+            oGreen <= hCnt / 50;
+//            oRed <= 4'b1111;
+//            oGreen <= 4'b0000;
+//            oGreen <= 4'b0011;
+//            oBlue <= 4'b0000;
+//            oRed <= image[hCnt][vCnt][3:0];
+//            oGreen <= image[hCnt][vCnt][7:4];
+//            oBlue <= image[hCnt][vCnt][11:8];
+        end
+        else begin
+            oRed <= 4'b0000;
+            oGreen <= 4'b1111;
         end
     end
 endmodule
