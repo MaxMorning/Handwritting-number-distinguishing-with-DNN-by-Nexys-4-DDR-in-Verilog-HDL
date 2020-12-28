@@ -12,12 +12,12 @@ module mouse_control(
     reg dataBusSendEna;
 
     reg clkSendBit;
-    reg clkReceiveBit;
+    wire clkReceiveBit;
     assign clkBus = clkBusSendEna ? clkSendBit : 1'bz;
     assign clkReceiveBit = clkBus;
 
     reg dataSendBit;
-    reg dataReceiveBit;
+    wire dataReceiveBit;
     reg [3:0] cursorPos;
     reg eccError;
     assign dataBus = dataBusSendEna ? dataSendBit : 1'bz;
@@ -71,6 +71,10 @@ module mouse_control(
                                 oLights[cursorPos] = 1'b1;
                             end
                         2: // y shift
+                            begin
+                                byteCnt <= 0;
+                            end
+                        default:
                             begin
                                 byteCnt <= 0;
                             end
