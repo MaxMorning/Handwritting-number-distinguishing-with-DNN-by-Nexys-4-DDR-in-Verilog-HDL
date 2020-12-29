@@ -7,7 +7,9 @@ module vga_test(
     output reg [3:0] oGreen, // green signal
     output reg [3:0] oBlue, // blue signal
     output oHs, // Hori sync
-    output oVs // Vert sync
+    output oVs, // Vert sync
+    output [7:0] oX,
+    output [7:0] oY
 );
 
     // 800 * 600
@@ -47,28 +49,31 @@ module vga_test(
         .resetn(iRstN)
     );
     
-    reg [15:0] cursor_x = 0;
-    reg [15:0] cursor_y = 0;
+    reg [16:0] cursor_x = 0;
+    reg [16:0] cursor_y = 0;
     reg [2:0]  but_stat;
     wire [8:0] mouse_x;
     wire [8:0] mouse_y;
     wire [2:0] button;
     wire done_sig;
     
-    wire [15:0] x_next;
-    wire [15:0] y_next;
+    wire [16:0] x_next;
+    wire [16:0] y_next;
     wire [2:0] b_next;
     
-    wire [7:0] x_abs;
-    wire [7:0] y_abs;
-    
-    assign x_abs = (mouse_x[8] == 1'b0) ? mouse_x[7:0] : ~(mouse_x[7:0] + 1);
-    assign y_abs = (mouse_y[8] == 1'b0) ? mouse_y[7:0] : ~(mouse_y[7:0] + 1);
+//    assign x_abs = ((mouse_x[8] == 1'b0) ? mouse_x[7:0] : ~(mouse_x[7:0] + 1));
+//    assign y_abs = ((mouse_y[8] == 1'b0) ? mouse_y[7:0] : ~(mouse_y[7:0] + 1));
 
-    assign x_next = (~done_sig) ? cursor_x : (mouse_x[8] == 0) ? ((cursor_x +  x_abs > 16'b1111111110000000) ? 16'b1111111110000000 : cursor_x + x_abs) : ((cursor_x >= x_abs) ? cursor_x - x_abs : 0);
-    assign y_next = (~done_sig) ? cursor_y : (mouse_y[8] == 0) ? ((cursor_y +  y_abs > 16'b1111111110000000) ? 16'b1111111110000000 : cursor_y + y_abs) : ((cursor_y >= y_abs) ? cursor_y - y_abs : 0);
+//    assign x_next = (~done_sig) ? cursor_x : (mouse_x[8] == 0 ? (cursor_x > (9'b100000000 - ((mouse_x[8] == 1'b0) ? mouse_x[7:0] : ~(mouse_x[7:0] + 1))) ? 9'b100000000 : cursor_x + ((mouse_x[8] == 1'b0) ? mouse_x[7:0] : ~(mouse_x[7:0] + 1))) : (cursor_x >= ((mouse_x[8] == 1'b0) ? mouse_x[7:0] : ~(mouse_x[7:0] + 1)) ? cursor_x - ((mouse_x[8] == 1'b0) ? mouse_x[7:0] : ~(mouse_x[7:0] + 1)) : 0));
+//    assign y_next = (~done_sig) ? cursor_y : (mouse_y[8] == 0 ? (cursor_y > (9'b100000000 - ((mouse_y[8] == 1'b0) ? mouse_y[7:0] : ~(mouse_y[7:0] + 1))) ? 9'b100000000 : cursor_y + ((mouse_y[8] == 1'b0) ? mouse_y[7:0] : ~(mouse_y[7:0] + 1))) : (cursor_y >= ((mouse_y[8] == 1'b0) ? mouse_y[7:0] : ~(mouse_y[7:0] + 1)) ? cursor_y - ((mouse_y[8] == 1'b0) ? mouse_y[7:0] : ~(mouse_y[7:0] + 1)) : 0));
+//    assign x_next = (~done_sig) ? cursor_x : cursor_x + {{6{mouse_x[8]}}, mouse_x[7:5]};
+//    assign y_next = (~done_sig) ? cursor_y : cursor_y + {{6{mouse_y[8]}}, mouse_y[7:5]};
+//    assign x_next = (~done_sig) ? cursor_x : (mouse_x[8] == 0 ? cursor_x + {5'b00000, mouse_x[7:4]} : cursor_x - {5'b11111, mouse_x[7:4]});
+//    assign y_next = (~done_sig) ? cursor_y : (mouse_y[8] == 0 ? cursor_y + {5'b00000, mouse_y[7:4]} : cursor_y - {5'b11111, mouse_y[7:4]});
+    assign x_next = (~done_sig) ? cursor_x : (mouse_x[7] == 0 ? cursor_x + mouse_x[7:0] : cursor_x - ~{9'b111111111, mouse_x[7:0]} - 1);
+    assign y_next = (~done_sig) ? cursor_y : (mouse_y[7] == 0 ? cursor_y - mouse_y[7:0] : cursor_y + ~{9'b111111111, mouse_y[7:0]} + 1);
     assign b_next = (~done_sig) ? 3'b000 : but_stat;
-    always @ ( * ) begin
+    always @ ( negedge iBusClk ) begin
         if (!iRstN) begin
             cursor_x <= 0;
             cursor_y <= 0;
@@ -81,6 +86,9 @@ module vga_test(
         end
     end
         
+    assign oX = cursor_x[16:9];
+//    assign oX[7] = done_sig;
+    assign oY = cursor_y[16:9];
 //    assign cursor_x = mouse_x;
 //    assign cursor_y = mouse_y;
     mouse mouse_inst(
@@ -136,9 +144,9 @@ module vga_test(
             oBlue <= 4'b0000;
         end
         else if (isActive) begin
-            if (hCnt - (C_H_SYNC_PULSE + C_H_BACK_PORCH) <= y_next[15: 7] + 8 && hCnt - (C_H_SYNC_PULSE + C_H_BACK_PORCH) >= y_next[15:7] && vCnt - (C_V_SYNC_PULSE + C_V_BACK_PORCH) <= x_next[15:7] + 8 && vCnt - (C_V_SYNC_PULSE + C_V_BACK_PORCH) >= x_next[15:7]) begin
+            if (hCnt - (C_H_SYNC_PULSE + C_H_BACK_PORCH) <= cursor_x[16:8] + 8 && hCnt - (C_H_SYNC_PULSE + C_H_BACK_PORCH) >= cursor_x[16:8] && vCnt - (C_V_SYNC_PULSE + C_V_BACK_PORCH) <= cursor_y[16:8] + 8 && vCnt - (C_V_SYNC_PULSE + C_V_BACK_PORCH) >= cursor_y[16:8]) begin
 //            if (hCnt - (C_H_SYNC_PULSE + C_H_BACK_PORCH) <= 240 && hCnt - (C_H_SYNC_PULSE + C_H_BACK_PORCH) >= 160) begin
-                if (button[0]) begin
+                if (button[2]) begin
                     oRed <= 4'b0000;
                     oBlue <= 4'b0000;
                     oGreen <= 4'b1111;
@@ -161,9 +169,9 @@ module vga_test(
             end
         end
         else begin
-            oRed <= 4'b0000;
-            oGreen <= 4'b0000;
-            oBlue <= 4'b0000;
+            oRed <= 4'b0010;
+            oGreen <= 4'b0010;
+            oBlue <= 4'b0010;
         end
     end
 endmodule

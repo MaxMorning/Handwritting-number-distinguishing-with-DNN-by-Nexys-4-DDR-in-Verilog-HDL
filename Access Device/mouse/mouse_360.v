@@ -288,7 +288,8 @@ module mouse(
 	pack1 = 3'b011,
 	pack2 = 3'b100,
 	pack3 = 3'b101,
-	done = 3'b110;
+	done = 3'b110,
+	pack4 = 3'b111;
 	// signal declaration
 	reg [2:0] state_reg, state_next;
 	wire [7:0] rx_data;
@@ -361,9 +362,13 @@ module mouse(
 			end
 			pack3: // wait for 3rd data packet
 			if (rx_done_sig) begin
-				state_next = done;
+				state_next = pack4;
 				y_next[7:0] = rx_data;
 				end
+		    pack4:
+		    if (rx_done_sig) begin
+		        state_next = done;
+		    end
 			done: begin
 				done_sig = 1'b1;
 				state_next = pack1;
