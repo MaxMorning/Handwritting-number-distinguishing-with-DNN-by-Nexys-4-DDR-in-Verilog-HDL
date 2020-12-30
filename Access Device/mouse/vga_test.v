@@ -108,8 +108,14 @@ module vga_test(
                         (vCnt >= (C_V_SYNC_PULSE + C_V_BACK_PORCH                  ))  &&
                         (vCnt <= (C_V_SYNC_PULSE + C_V_BACK_PORCH + C_V_ACTIVE_TIME))  ;
 
-    reg image[32 * 32 - 1:0]; // 转化为28*28可用5*5卷积实现，padding = valid
+    reg image[32 * 32 - 1:0]; 
     reg [10:0] rowCnt;
+    
+    wire [10:0] hPos;
+    wire [10:0] vPos;
+//    reg [9:0] index;
+    assign hPos = hCnt - (C_H_SYNC_PULSE + C_H_BACK_PORCH);
+    assign vPos = vCnt - (C_V_SYNC_PULSE + C_V_BACK_PORCH);
     always @ (posedge clkVga or negedge iRstN) begin
         if (!iRstN) begin
             oRed <= 4'b0000;
@@ -119,37 +125,44 @@ module vga_test(
                 image[rowCnt] = 0;
         end
         else if (isActive) begin
-            if (hCnt - (C_H_SYNC_PULSE + C_H_BACK_PORCH) <= cursor_x[16:8] + 8 && hCnt - (C_H_SYNC_PULSE + C_H_BACK_PORCH) >= cursor_x[16:8] && vCnt - (C_V_SYNC_PULSE + C_V_BACK_PORCH) <= cursor_y[16:8] + 8 && vCnt - (C_V_SYNC_PULSE + C_V_BACK_PORCH) >= cursor_y[16:8]) begin
-                if (button[2]) begin // 右键按下颜色
+            if (hPos <= cursor_x[16:8] + 8 && hPos >= cursor_x[16:8] && vPos <= cursor_y[16:8] + 8 && vPos >= cursor_y[16:8]) begin
+                if (button[2]) begin 
                     oRed <= 4'b0000;
                     oBlue <= 4'b0000;
                     oGreen <= 4'b1111;
-                    image[{cursor_x[16:12], cursor_y[16:12]}] <= 1;
                 end
-                else if (button[1]) begin // 左键按下颜色
+                else if (button[1]) begin 
                     oRed <= 4'b0000;
                     oBlue <= 4'b1111;
                     oGreen <= 4'b0000;
                 end
-                else begin // 光标默认颜色
+                else begin
                     oRed <= 4'b1111;
                     oBlue <= 4'b0000;
                     oGreen <= 4'b0000;
                 end
             end
             else begin
-                if (image[{cursor_x[16:12], cursor_y[16:12]}] == 1) begin // 绘制的颜色
+//                index = {hPos[10:6], vPos[10:6]};
+//                if (image[index] == 1) begin
+                if (hPos < 512 && vPos < 512 && image[{hPos[8:4], vPos[8:4]}] == 1) begin
                     oRed <= 4'b1111;
                     oGreen <= 4'b0000;
                     oBlue <= 4'b1111;
                 end
-                else begin // 背景色
+                else begin 
                     oRed <= 4'b1111;
                     oGreen <= 4'b1111;
-                    oBlue <= 4'b11111;
+                    oBlue <= 4'b1111;
                 end
                 
             end
+            
+            if (button[1] && !image[{cursor_x[16:12], cursor_y[16:12]}]) begin
+                image[{cursor_x[16:12], cursor_y[16:12]}] = 1;
+            end
+//            else if (button[0] && image[{cursor_x[16:12], cursor_y[16:12]}])
+//                image[{cursor_x[16:12], cursor_y[16:12]}] = 0;
         end
         else begin
             oRed <= 4'b0010;
