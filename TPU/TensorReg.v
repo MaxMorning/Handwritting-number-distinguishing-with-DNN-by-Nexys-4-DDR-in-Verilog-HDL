@@ -3,12 +3,12 @@ module TensorReg( // tensor register , read data from it on negedge, send data t
     input ena, // high volt active , enable signal
     input wEna, // high volt active, write enable signal
     input [4:0] addrIn,
-    input [63:0] dataIn,
+    input [255:0] dataIn,
 
-    output reg [63:0] dataOut
+    output reg [255:0] dataOut
 );
 
-    reg [63:0] memories [63:0];
+    reg [255:0] memories [31:0];
 
     always @ (posedge iClk) begin
         if (ena) begin // active
@@ -20,6 +20,6 @@ module TensorReg( // tensor register , read data from it on negedge, send data t
             end
         end
         else
-            dataOut = {64{1'bz}};
+            dataOut = {255{1'bz}};
     end
 endmodule
