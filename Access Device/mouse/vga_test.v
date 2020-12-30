@@ -31,14 +31,6 @@ module vga_test(
     wire isActive;
     
     
-    //reg [11:0] image [799:0][599:0];
-
-//    clk_wiz_40m clk_inst
-//   (
-//        .clk_in1(iBusClk),
-//        .clk_out1(clkVga),
-//        .resetn(iRstN) // input resetn
-//    );
     
     wire mouseClk;
     
@@ -61,15 +53,6 @@ module vga_test(
     wire [16:0] y_next;
     wire [2:0] b_next;
     
-//    assign x_abs = ((mouse_x[8] == 1'b0) ? mouse_x[7:0] : ~(mouse_x[7:0] + 1));
-//    assign y_abs = ((mouse_y[8] == 1'b0) ? mouse_y[7:0] : ~(mouse_y[7:0] + 1));
-
-//    assign x_next = (~done_sig) ? cursor_x : (mouse_x[8] == 0 ? (cursor_x > (9'b100000000 - ((mouse_x[8] == 1'b0) ? mouse_x[7:0] : ~(mouse_x[7:0] + 1))) ? 9'b100000000 : cursor_x + ((mouse_x[8] == 1'b0) ? mouse_x[7:0] : ~(mouse_x[7:0] + 1))) : (cursor_x >= ((mouse_x[8] == 1'b0) ? mouse_x[7:0] : ~(mouse_x[7:0] + 1)) ? cursor_x - ((mouse_x[8] == 1'b0) ? mouse_x[7:0] : ~(mouse_x[7:0] + 1)) : 0));
-//    assign y_next = (~done_sig) ? cursor_y : (mouse_y[8] == 0 ? (cursor_y > (9'b100000000 - ((mouse_y[8] == 1'b0) ? mouse_y[7:0] : ~(mouse_y[7:0] + 1))) ? 9'b100000000 : cursor_y + ((mouse_y[8] == 1'b0) ? mouse_y[7:0] : ~(mouse_y[7:0] + 1))) : (cursor_y >= ((mouse_y[8] == 1'b0) ? mouse_y[7:0] : ~(mouse_y[7:0] + 1)) ? cursor_y - ((mouse_y[8] == 1'b0) ? mouse_y[7:0] : ~(mouse_y[7:0] + 1)) : 0));
-//    assign x_next = (~done_sig) ? cursor_x : cursor_x + {{6{mouse_x[8]}}, mouse_x[7:5]};
-//    assign y_next = (~done_sig) ? cursor_y : cursor_y + {{6{mouse_y[8]}}, mouse_y[7:5]};
-//    assign x_next = (~done_sig) ? cursor_x : (mouse_x[8] == 0 ? cursor_x + {5'b00000, mouse_x[7:4]} : cursor_x - {5'b11111, mouse_x[7:4]});
-//    assign y_next = (~done_sig) ? cursor_y : (mouse_y[8] == 0 ? cursor_y + {5'b00000, mouse_y[7:4]} : cursor_y - {5'b11111, mouse_y[7:4]});
     assign x_next = (~done_sig) ? cursor_x : (mouse_x[7] == 0 ? cursor_x + mouse_x[7:0] : cursor_x - ~{9'b111111111, mouse_x[7:0]} - 1);
     assign y_next = (~done_sig) ? cursor_y : (mouse_y[7] == 0 ? cursor_y - mouse_y[7:0] : cursor_y + ~{9'b111111111, mouse_y[7:0]} + 1);
     assign b_next = (~done_sig) ? 3'b000 : but_stat;
@@ -87,10 +70,7 @@ module vga_test(
     end
         
     assign oX = cursor_x[16:9];
-//    assign oX[7] = done_sig;
     assign oY = cursor_y[16:9];
-//    assign cursor_x = mouse_x;
-//    assign cursor_y = mouse_y;
     mouse mouse_inst(
         .clk(mouseClk),
         .reset(iRstN),
@@ -101,16 +81,7 @@ module vga_test(
         .button(button),
         .done_sig(done_sig)
     );
-//    ps2_mouse_xy(
-//        .clk(mouseClk),
-//        .reset(~iRstN),
-//        .ps2_clk(ps2clk),
-//        .ps2_data(ps2data),
-//        .mx(cursor_x),
-//        .my(cursor_y),
-//        .btn_click(but_stat)
-//    );
-//    assign clkVga = iBusClk;
+
     // Hori
     always @ (posedge clkVga or negedge iRstN) begin
         if (!iRstN || hCnt == C_H_LINE_PERIOD - 1)
@@ -137,35 +108,51 @@ module vga_test(
                         (vCnt >= (C_V_SYNC_PULSE + C_V_BACK_PORCH                  ))  &&
                         (vCnt <= (C_V_SYNC_PULSE + C_V_BACK_PORCH + C_V_ACTIVE_TIME))  ;
 
+    reg image[31:0][31:0]; // 转化为28*28可用5*5卷积实现，padding = valid
+    reg [4:0] rowCnt;
+    reg [4:0] colCnt;
     always @ (posedge clkVga or negedge iRstN) begin
         if (!iRstN) begin
             oRed <= 4'b0000;
             oGreen <= 4'b0000;
             oBlue <= 4'b0000;
+            rowCnt <= 0;
+            colCnt <= 0;
+            for (;rowCnt <= 31; rowCnt = rowCnt + 1)
+                for (; colCnt <= 31; colCnt = colCnt + 1)
+                    image[rowCnt][colCnt] = 0;
         end
         else if (isActive) begin
             if (hCnt - (C_H_SYNC_PULSE + C_H_BACK_PORCH) <= cursor_x[16:8] + 8 && hCnt - (C_H_SYNC_PULSE + C_H_BACK_PORCH) >= cursor_x[16:8] && vCnt - (C_V_SYNC_PULSE + C_V_BACK_PORCH) <= cursor_y[16:8] + 8 && vCnt - (C_V_SYNC_PULSE + C_V_BACK_PORCH) >= cursor_y[16:8]) begin
-//            if (hCnt - (C_H_SYNC_PULSE + C_H_BACK_PORCH) <= 240 && hCnt - (C_H_SYNC_PULSE + C_H_BACK_PORCH) >= 160) begin
-                if (button[2]) begin
+                if (button[2]) begin // 右键按下颜色
                     oRed <= 4'b0000;
                     oBlue <= 4'b0000;
                     oGreen <= 4'b1111;
+                    image[cursor_x[16:12]][cursor_y[16:12]] <= 1;
                 end
-                else if (button[1]) begin
+                else if (button[1]) begin // 左键按下颜色
                     oRed <= 4'b0000;
                     oBlue <= 4'b1111;
                     oGreen <= 4'b0000;
                 end
-                else begin
+                else begin // 光标默认颜色
                     oRed <= 4'b1111;
-                    oBlue <= 4'b1111;
-                    oGreen <= 4'b1111;
+                    oBlue <= 4'b0000;
+                    oGreen <= 4'b0000;
                 end
             end
             else begin
-                oRed <= 4'b1111;
-                oGreen <= 4'b0000;
-                oBlue <= 4'b0000;
+                if (image[cursor_x[16:12]][cursor_y[16:12]] == 1) begin // 绘制的颜色
+                    oRed <= 4'b1111;
+                    oGreen <= 4'b0000;
+                    oBlue <= 4'b1111;
+                end
+                else begin // 背景色
+                    oRed <= 4'b1111;
+                    oGreen <= 4'b1111;
+                    oBlue <= 4'b11111;
+                end
+                
             end
         end
         else begin
