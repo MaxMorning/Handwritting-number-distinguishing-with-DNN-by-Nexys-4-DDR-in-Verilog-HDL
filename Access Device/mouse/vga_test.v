@@ -108,19 +108,15 @@ module vga_test(
                         (vCnt >= (C_V_SYNC_PULSE + C_V_BACK_PORCH                  ))  &&
                         (vCnt <= (C_V_SYNC_PULSE + C_V_BACK_PORCH + C_V_ACTIVE_TIME))  ;
 
-    reg image[31:0][31:0]; // 转化为28*28可用5*5卷积实现，padding = valid
-    reg [4:0] rowCnt;
-    reg [4:0] colCnt;
+    reg image[32 * 32 - 1:0]; // 转化为28*28可用5*5卷积实现，padding = valid
+    reg [10:0] rowCnt;
     always @ (posedge clkVga or negedge iRstN) begin
         if (!iRstN) begin
             oRed <= 4'b0000;
             oGreen <= 4'b0000;
             oBlue <= 4'b0000;
-            rowCnt <= 0;
-            colCnt <= 0;
-            for (;rowCnt <= 31; rowCnt = rowCnt + 1)
-                for (; colCnt <= 31; colCnt = colCnt + 1)
-                    image[rowCnt][colCnt] = 0;
+            for (rowCnt = 0;rowCnt < 1024; rowCnt = rowCnt + 1)
+                image[rowCnt] = 0;
         end
         else if (isActive) begin
             if (hCnt - (C_H_SYNC_PULSE + C_H_BACK_PORCH) <= cursor_x[16:8] + 8 && hCnt - (C_H_SYNC_PULSE + C_H_BACK_PORCH) >= cursor_x[16:8] && vCnt - (C_V_SYNC_PULSE + C_V_BACK_PORCH) <= cursor_y[16:8] + 8 && vCnt - (C_V_SYNC_PULSE + C_V_BACK_PORCH) >= cursor_y[16:8]) begin
@@ -128,7 +124,7 @@ module vga_test(
                     oRed <= 4'b0000;
                     oBlue <= 4'b0000;
                     oGreen <= 4'b1111;
-                    image[cursor_x[16:12]][cursor_y[16:12]] <= 1;
+                    image[{cursor_x[16:12], cursor_y[16:12]}] <= 1;
                 end
                 else if (button[1]) begin // 左键按下颜色
                     oRed <= 4'b0000;
@@ -142,7 +138,7 @@ module vga_test(
                 end
             end
             else begin
-                if (image[cursor_x[16:12]][cursor_y[16:12]] == 1) begin // 绘制的颜色
+                if (image[{cursor_x[16:12], cursor_y[16:12]}] == 1) begin // 绘制的颜色
                     oRed <= 4'b1111;
                     oGreen <= 4'b0000;
                     oBlue <= 4'b1111;
