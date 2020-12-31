@@ -1,5 +1,6 @@
 `timescale 1ns / 1ps
 
+//version 1 + 3 + 4, abandon
 module Float8Adder_tb;
 
     reg [7:0] iNum1;

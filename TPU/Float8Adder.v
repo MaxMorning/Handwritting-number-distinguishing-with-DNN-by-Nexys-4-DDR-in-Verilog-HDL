@@ -19,15 +19,15 @@ module Float8Adder(
             oNum = iNum1;
         end
         else begin
-            if (iNum1[6:4] < iNum2[6:4]) begin
+            if (iNum1[6:3] < iNum2[6:3]) begin
                 numBig = iNum2;
                 numSmall = iNum1;
             end
-            else if (iNum1[6:4] > iNum2[6:4]) begin
+            else if (iNum1[6:3] > iNum2[6:3]) begin
                 numBig = iNum1;
                 numSmall = iNum2;
             end
-            else if (iNum1[3:0] < iNum2[3:0]) begin
+            else if (iNum1[2:0] < iNum2[2:0]) begin
                 numBig = iNum2;
                 numSmall = iNum1;
             end
@@ -40,32 +40,31 @@ module Float8Adder(
                 oNum[7] = iNum1[7];
 
                 
-                temp1 = {1'b1, numBig[3:0]};
-                temp2 = {1'b1, numSmall[3:0]} >> (numBig[6:4] - numSmall[6:4]);
+                temp1 = {1'b1, numBig[2:0]};
+                temp2 = {1'b1, numSmall[2:0]} >> (numBig[6:3] - numSmall[6:3]);
                 temp3 = temp1 + temp2;
-                if (temp3[5] == 1) begin //carry
-                    if (numBig[6:4] != 3'b111) begin
-                        oNum[6:4] = numBig[6:4] + 1;
-                        oNum[3:0] = temp3[4:1];
+                if (temp3[4] == 1) begin //carry
+                    if (numBig[6:3] != 4'b1111) begin
+                        oNum[6:3] = numBig[6:3] + 1;
+                        oNum[2:0] = temp3[3:1];
                     end
                     else overflow = 1;
                 end
                 else begin
-                    oNum[6:4] = numBig[6:4];
-                    oNum[3:0] = temp3[3:0];
+                    oNum[6:3] = numBig[6:3];
+                    oNum[2:0] = temp3[2:0];
                 end
             end
             else begin // different sign
                 if (iNum1[6:0] == iNum2[6:0]) oNum = {8'h00};
                 else begin
-                    temp1 = {1'b1, numBig[3:0]};
-                    temp2 = {1'b1, numSmall[3:0]} >> (numBig[6:4] - numSmall[6:4]);
+                    temp1 = {1'b1, numBig[2:0]};
+                    temp2 = {1'b1, numSmall[2:0]} >> (numBig[6:3] - numSmall[6:3]);
                     temp3 = temp1 - temp2;
-                    if (temp3[4] == 1) oNum[6:0] = {numBig[6:4], temp3[3:0]};
-                    else if (temp3[3] == 1) oNum[6:0] = {numBig[6:4] - 1, temp3[2:0], 1'b0};
-                    else if (temp3[2] == 1) oNum[6:0] = {numBig[6:4] - 2, temp3[1:0], 2'b00};
-                    else if (temp3[1] == 1) oNum[6:0] = {numBig[6:4] - 3, temp3[0], 3'b000};
-                    else oNum[6:0] = {numBig[6:4] - 3, 4'b0000};
+                    if (temp3[3] == 1) oNum[6:0] = {numBig[6:3], temp3[2:0]};
+                    else if (temp3[2] == 1) oNum[6:0] = {numBig[6:3] - 1, temp3[1:0], 1'b0};
+                    else if (temp3[1] == 1) oNum[6:0] = {numBig[6:3] - 2, temp3[0], 2'b00};
+                    else oNum[6:0] = {numBig[6:3] - 3, 3'b000};
                     
                     if (iNum1[7] == numBig[7]) oNum[7] = 1'b0;
                     else oNum[7] = 1'b1; 

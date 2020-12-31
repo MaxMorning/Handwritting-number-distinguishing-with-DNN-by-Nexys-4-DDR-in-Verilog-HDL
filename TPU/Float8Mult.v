@@ -6,8 +6,9 @@ module Float8Mult(
     );
     
     reg [3:0] i;
-    reg [9:0] result = 0;
-    reg [9:0] temp;
+    reg [7:0] result = 0;
+    reg [7:0] temp1;
+    reg [7:0] temp2;
     always @ ( * ) begin
         result = 0;
         oNum = 8'h00;
@@ -16,21 +17,21 @@ module Float8Mult(
             overflow = 0;
             oNum[7] <= iNum1[7] ^ iNum2[7];
         
-            temp = {1'b1, iNum1[3:0]};
+            temp1 = {6'b000001, iNum1[2:0]};
+            temp2 = {6'b000001, iNum2[2:0]};
             for (i = 0; i < 4; i = i + 1) begin
-                if (iNum2[i] == 1'b1) result = result + temp;
-                temp = temp << 1;
+                if (temp2[i] == 1'b1) result = result + temp1;
+                temp1 = temp1 << 1;
             end
-            result = result + temp;
-            if (result[9] == 1) begin
-                if ({1'b1, iNum1[6:4]} - 3 > 4'b1111 - {1'b0, iNum2[6:4]}) overflow = 1;
-                else if (3 > iNum1[6:4] + iNum2[6:4]) oNum = 8'h00;
-                else oNum[6:0] = {iNum1[6:4] + iNum2[6:4] - 3,  result[8:5]};
+            if (result[7] == 1) begin
+                if ({1'b1, iNum1[6:3]} - 7 > 5'b11111 - {1'b0, iNum2[6:3]}) overflow = 1;
+                else if (7 > iNum1[6:3] + iNum2[6:3]) oNum = 8'h00;
+                else oNum[6:0] = {iNum1[6:3] + (iNum2[6:3] - 7),  result[6:4]};
             end
             else begin
-                if ({1'b1, iNum1[6:4]} - 4 > 4'b1111 - {1'b0, iNum2[6:4]}) overflow = 1;
-                else if (4 > iNum1[6:4] + iNum2[6:4]) oNum = 8'h00;
-                else oNum[6:0] = {iNum1[6:4] + iNum2[6:4] - 4,  result[7:4]};
+                if ({1'b1, iNum1[6:3]} - 8 > 5'b11111 - {1'b0, iNum2[6:3]}) overflow = 1;
+                else if (8 > iNum1[6:3] + iNum2[6:3]) oNum = 8'h00;
+                else oNum[6:0] = {iNum1[6:3] + (iNum2[6:3] - 8),  result[5:3]};
             end
         end
     end
