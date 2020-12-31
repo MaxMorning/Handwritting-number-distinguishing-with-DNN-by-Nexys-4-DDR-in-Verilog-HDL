@@ -34,5 +34,7 @@ module Float8Mult(
                 else oNum[6:0] = {iNum1[6:3] + (iNum2[6:3] - 8),  result[5:3]};
             end
         end
+        else 
+            overflow = 0;
     end
 endmodule

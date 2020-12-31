@@ -12,9 +12,10 @@ module TPU_Conv_25(
     assign add_out[7:0] = mult_out[7:0];
     assign overflows[25] = 1'b0;
 
-    genvar i;
+    
     generate
-        for (i = 0; i < 25; i = i + 1) begin
+        genvar i;
+        for (i = 0; i < 25; i = i + 1) begin : Mult
             Float8Mult inst(
                 .iNum1(data_in1[8 * i + 7: 8 * i]),
                 .iNum2(data_in2[8 * i + 7: 8 * i]),
@@ -23,14 +24,14 @@ module TPU_Conv_25(
             );
         end
 
-        for (i = 1; i < 25; i = i + 1) begin
+        for (i = 1; i < 25; i = i + 1) begin : Add
             Float8Adder inst(
                 .iNum1(add_out[8 * i - 1: 8 * i - 8]),
                 .iNum2(mult_out[8 * i + 7:8 * i]),
                 .oNum(add_out[8 * i + 7:8 * i]),
                 .overflow(overflows[25 + i])
             );
-        end
+    end
     endgenerate
     
     assign overflow = | overflows;
