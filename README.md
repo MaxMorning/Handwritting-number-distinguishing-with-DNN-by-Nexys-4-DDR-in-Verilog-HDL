@@ -66,3 +66,57 @@ Handwritting number distinguishing with CNN by Nexys 4 DDR in Verilog HDL.
 ...
 
 0x17D FC2 Weight9
+
+0x180 Data Origin[31:28]
+
+0x181 Data Origin[27:24]
+
+...
+
+0x187 Data Origin[3:0]
+
+0x188 Data 28*28*1[27:24]
+
+...
+
+0x18E Data 28*28*1[3:0]
+
+0x18F Data 24*24*32[0][23:20]
+
+...
+
+0x194 Data 24*24*32[0][3:0]
+
+0x195 Data 24*24*32[1][23:20]
+
+...
+
+0x19A Data 24*24*32[1][3:0]
+
+......
+
+0x24E Data 24*24*32[31][3:0]
+
+0x24F Data 12*12*32[0][11:6]
+
+0x250 Data 12*12*32[0][5:0]
+
+...
+
+0x28E Data 12*12*32[31][5:0]
+
+0x28F Data 8*8*16[1:0]
+
+...
+
+0x296 Data 8*8*16[15:14]
+
+0x297 Data 256[127:0]
+
+0x298 Data 256[255:128]
+
+0x299 Data 128
+
+0x29A Data 10
+
+total 666 kbit
