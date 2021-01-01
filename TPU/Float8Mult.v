@@ -1,7 +1,7 @@
 module Float8Mult(
     input [7:0] iNum1,
     input [7:0] iNum2,
-    output reg [7:0] oNum,
+    output reg [7:0] oNum
     );
     
     reg [13:0] result;
