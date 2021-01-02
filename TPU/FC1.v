@@ -22,7 +22,7 @@ module full_connect1(
 
     reg bias_get_done;
     reg bias_ask_done;
-    reg [2:0] colCnt;
+    reg [3:0] colCnt;
     reg [7:0] rowCnt;
     reg [128 * 8 - 1:0] biases;
     reg [3:0] status;
@@ -49,11 +49,11 @@ module full_connect1(
         end
         else begin
             if (bias_ask_done == 0) begin
-                addr_to_ram <= bias_addr_base;
+                addr_to_rom <= bias_addr_base;
                 bias_ask_done <= 1;
             end
             else if (bias_get_done == 0) begin
-                biases = data_from_ram;
+                biases = data_from_rom;
                 bias_get_done = 1;
             end
         end
@@ -68,16 +68,17 @@ module full_connect1(
         .iNum1(adder_opr1),
         .iNum2(adder_opr2),
 
-        .oNum(adder_overflow),
-        .overflow(adder_sum)
+        .oNum(adder_sum),
+        .overflow(adder_overflow)
     );
     always @ (posedge clk) begin
-        if (bias_get_done)
+        if (bias_get_done && ena && iRst_n)
             case (status)
                 4'b1000: // c = 0
                     begin
                         status <= 4'b0000;
                         colCnt <= 0;
+                        sum <= 0;
                     end
                 4'b0000: // ask w,a
                     begin
@@ -94,7 +95,7 @@ module full_connect1(
                 4'b0010: // get wa ; calc sum += wa
                     begin
                         status <= 4'b0011;
-                        overflow <= overflow | overflow_from_MultAdder;
+                        overflow = overflow | overflow_from_MultAdder;
                         adder_opr1 = sum;
                         adder_opr2 <= data_from_MultAdder;
                     end
@@ -116,7 +117,7 @@ module full_connect1(
                     begin
                         status <= 4'b0110;
                         adder_opr1 <= sum;
-                        adder_opr2 <= biases[8 * rowCnt + 7 -: 8];
+                        adder_opr2 <= {biases[8 * rowCnt + 7 -: 8], 7'b0000000};
                     end
                 4'b0110 : // get sum += bias
                     begin
