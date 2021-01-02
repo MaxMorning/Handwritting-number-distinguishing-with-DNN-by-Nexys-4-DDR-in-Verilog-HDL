@@ -3,11 +3,11 @@ module conv1(
     input clk,
     input ena,
     input iRst_n,
-    input [28 * 28 * 8 - 1:0] tensor_in,
+    input [32 * 32 * 8 - 1:0] tensor_in,
     input [25 * 8 - 1:0] filter_in,
     input [7:0] bias_in,
 
-    output reg [24 * 24 * 8 - 1:0] tensor_out,
+    output reg [28 * 28 * 8 - 1:0] tensor_out,
     output reg overflow,
     output reg done
 );
@@ -48,17 +48,17 @@ module conv1(
                 overflow <= 0;
             end
             else begin
-                opr1 <= {tensor_in[((rowCnt + 4) * 28 + (colCnt + 4)) * 8 + 7 -: 5 * 8],
-                        tensor_in[((rowCnt + 3) * 28 + (colCnt + 4)) * 8 + 7 -: 5 * 8],
-                        tensor_in[((rowCnt + 2) * 28 + (colCnt + 4)) * 8 + 7 -: 5 * 8],
-                        tensor_in[((rowCnt + 1) * 28 + (colCnt + 4)) * 8 + 7 -: 5 * 8],
-                        tensor_in[((rowCnt + 0) * 28 + (colCnt + 4)) * 8 + 7 -: 5 * 8]};
+                opr1 <= {tensor_in[((rowCnt + 4) * 32 + (colCnt + 4)) * 8 + 7 -: 5 * 8],
+                        tensor_in[((rowCnt + 3) * 32 + (colCnt + 4)) * 8 + 7 -: 5 * 8],
+                        tensor_in[((rowCnt + 2) * 32 + (colCnt + 4)) * 8 + 7 -: 5 * 8],
+                        tensor_in[((rowCnt + 1) * 32 + (colCnt + 4)) * 8 + 7 -: 5 * 8],
+                        tensor_in[((rowCnt + 0) * 32 + (colCnt + 4)) * 8 + 7 -: 5 * 8]};
 
                 opr2 <= filter_in;
             end
         end
         else begin
-            tensor_out <= {(24 * 24 * 8){1'bz}};
+            tensor_out <= {(28 * 28 * 8){1'bz}};
             overflow <= 1'bz;
             done <= 1'bz;
         end
@@ -66,13 +66,13 @@ module conv1(
 
     always @ (negedge clk) begin
         if (ena && iRst_n) begin
-            tensor_out[(rowCnt * 24 + colCnt) * 8 + 7 -: 8] <= result_out[14:7];
+            tensor_out[(rowCnt * 28 + colCnt) * 8 + 7 -: 8] <= result_out[14:7];
             overflow <= overflow | wire_conv_overflow | wire_bias_overflow;
 
             if (colCnt == 5'd00) begin
-                colCnt <= 23;
+                colCnt <= 27;
                 if (rowCnt == 5'd00) begin
-                    rowCnt <= 23;
+                    rowCnt <= 27;
                     done <= 1;
                 end
                 else

@@ -59,7 +59,7 @@ module full_connect256(
             cnt = 0;
             biases = 0;
             overflow = 0;
-            done = 1;
+            done = 0;
             status = 4'b0000; // ask a0
         end
         else begin

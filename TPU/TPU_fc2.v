@@ -76,7 +76,7 @@ module full_connect128(
 
                 3'b111: // jump or return
                     begin
-                        if (cnt < 10) begin
+                        if (cnt < 64) begin
                             status <= 3'b011;
                         end
                         else begin
