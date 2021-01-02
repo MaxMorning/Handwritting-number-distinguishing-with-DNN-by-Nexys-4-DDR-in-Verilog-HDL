@@ -1,5 +1,8 @@
-module vga_test(
+module vga_module(
     input iBusClk, // Bus Clock
+    input ena, // enable
+    input mouseClk, // mouse clk, 5MHz?
+    input clkVga, // VGA clock, 40MHz
     input iRstN, // Async reset signal
     inout ps2clk, // ps2 Clock Bus
     inout ps2data, // ps2 Data Bus
@@ -8,8 +11,7 @@ module vga_test(
     output reg [3:0] oBlue, // blue signal
     output oHs, // Hori sync
     output oVs, // Vert sync
-    output [7:0] oX,
-    output [7:0] oY
+    output reg [32 * 32 - 1:0] image
 );
 
     // 800 * 600
@@ -27,19 +29,9 @@ module vga_test(
 
     reg [10:0] hCnt; // Hori Counter
     reg [10:0] vCnt; // Vert Counter
-    wire clkVga; // VGA clock, 40MHz
+    wire clkVga; 
     wire isActive;
     
-    
-    
-    wire mouseClk;
-    
-    clk_wiz_0 clk_inst(
-        .clk_in1(iBusClk),
-        .clk_out1(mouseClk),
-        .clk_out2(clkVga),
-        .resetn(iRstN)
-    );
     
     reg [16:0] cursor_x = 0;
     reg [16:0] cursor_y = 0;
@@ -108,7 +100,6 @@ module vga_test(
                         (vCnt >= (C_V_SYNC_PULSE + C_V_BACK_PORCH                  ))  &&
                         (vCnt <= (C_V_SYNC_PULSE + C_V_BACK_PORCH + C_V_ACTIVE_TIME))  ;
 
-    reg image[32 * 32 - 1:0]; 
     reg [10:0] rowCnt;
     
     wire [10:0] hPos;
@@ -124,7 +115,7 @@ module vga_test(
             for (rowCnt = 0;rowCnt < 1024; rowCnt = rowCnt + 1)
                 image[rowCnt] = 0;
         end
-        else if (isActive) begin
+        else if (isActive && ena) begin
             if (hPos <= cursor_x[16:8] + 8 && hPos >= cursor_x[16:8] && vPos <= cursor_y[16:8] + 8 && vPos >= cursor_y[16:8]) begin
                 if (button[2]) begin 
                     oRed <= 4'b0000;
