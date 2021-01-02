@@ -13,7 +13,7 @@ module full_connect2_tb;
     wire overflow;
     wire done;
     wire [31:0] addr_to_rom;
-    wire [31:0] addr_to_ram;
+    // wire [31:0] addr_to_ram;
     wire [128 * 8 - 1:0] opr1_to_MultAdder;
     wire [128 * 8 - 1:0] opr2_to_MultAdder;
     wire [10 * 8 - 1:0] data_to_ram;
@@ -30,7 +30,7 @@ module full_connect2_tb;
         .overflow(overflow),
         .done(done),
         .addr_to_rom(addr_to_rom),
-        .addr_to_ram(addr_to_ram),
+        // .addr_to_ram(addr_to_ram),
         .opr1_to_MultAdder(opr1_to_MultAdder),
         .opr2_to_MultAdder(opr2_to_MultAdder),
         .data_to_ram(data_to_ram)
@@ -52,5 +52,8 @@ module full_connect2_tb;
         data_from_ram = {128{8'b00000010}};
         data_from_MultAdder = 15'b000000101000011;
         overflow_from_MultAdder = 0;
+        
+        #10000
+        ena = 0;
     end
 endmodule

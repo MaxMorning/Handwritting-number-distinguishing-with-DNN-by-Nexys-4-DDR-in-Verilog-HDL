@@ -9,16 +9,15 @@ module full_connect2(
     
     output reg overflow,
     output reg done,
-    output reg [31:0] addr_to_rom,
+    output reg [10:0] addr_to_rom,
     // output reg [31:0] addr_to_ram,
     output reg [128 * 8 - 1:0] opr1_to_MultAdder,
     output reg [128 * 8 - 1:0] opr2_to_MultAdder,
     output reg [10 * 8 - 1:0] data_to_ram
 );
 
-    parameter   rom_addr_base = 32'h00000000,
-                ram_addr_base = 32'h00001000,
-                bias_addr_base = 32'h00002000;
+    parameter   rom_addr_base = 11'h000000,
+                bias_addr_base = 11'h02000;
 
     reg bias_get_done;
     reg bias_ask_done;
@@ -31,7 +30,7 @@ module full_connect2(
         if (!ena) begin
             overflow <= 1'bz;
             done <= 0;
-            addr_to_rom <= {32{1'bz}};
+            addr_to_rom <= {11{1'bz}};
             // addr_to_ram <= {32{1'bz}};
             opr1_to_MultAdder <= {1024{1'bz}};
             opr2_to_MultAdder <= {1024{1'bz}};
@@ -100,7 +99,7 @@ module full_connect2(
                     begin
                         status <= 4'b0100;
                         overflow = overflow | adder_overflow;
-                        data_to_ram[8 * rowCnt + 7 -: 8] = adder_sum[14:7];
+                        data_to_ram[8 * rowCnt + 7 -: 8] = (adder_sum[14] == 0 || adder_sum[13:7] == 0) ? adder_sum[14:7] : 8'b00000000; // relu
                         rowCnt = rowCnt + 1;
                         sum = 0;
                     end
