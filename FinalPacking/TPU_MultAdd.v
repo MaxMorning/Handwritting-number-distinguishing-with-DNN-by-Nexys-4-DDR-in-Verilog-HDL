@@ -19,7 +19,7 @@ module TPU_MultAdd(
                 .iNum1(data_in1[i * 8 + 7:i * 8]),
                 .iNum2(data_in2[i * 8 + 7:i * 8]),
 
-                .oNum(data_out[i * 15 + 14:i * 15])
+                .oNum(mult_out[i * 15 + 14:i * 15])
             );
         end
 

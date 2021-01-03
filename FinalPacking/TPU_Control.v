@@ -6,7 +6,7 @@ module TPU_Control(
 
     output reg [3:0] num_out,
     output reg overflow,
-    output reg done,
+    output reg done
 );
 
     reg [2:0] status;
@@ -89,7 +89,7 @@ module TPU_Control(
     );
 
     wire [10 * 8 - 1:0] data_fc2_10max;
-    full_connect1 fc2(
+    full_connect2 fc2(
         .ena(FC2_ena),
         .clk(clk),
         .iRst_n(FC2_rstn),
@@ -131,8 +131,6 @@ module TPU_Control(
             done <= 0;
             FC1_ena <= 0;
             FC2_ena <= 0;
-            FC1_done <= 0;
-            FC2_done <= 0;
             FC1_rstn <= 1;
             FC2_rstn <= 1;
         end
@@ -147,7 +145,7 @@ module TPU_Control(
                 3'b101: // FC1 rst done
                     begin
                         status <= 3'b001;
-                        FC1_rstn <= 1
+                        FC1_rstn <= 1;
                     end
                 3'b001: // FC1 done ?
                     begin
@@ -168,7 +166,7 @@ module TPU_Control(
                 3'b110: // FC2 rst done
                     begin
                         status <= 3'b011;
-                        FC2_rstn <= 1
+                        FC2_rstn <= 1;
                     end
                 3'b011: // FC2 done ?
                     begin

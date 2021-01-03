@@ -29,7 +29,6 @@ module vga_module(
 
     reg [10:0] hCnt; // Hori Counter
     reg [10:0] vCnt; // Vert Counter
-    wire clkVga; 
     wire isActive;
     
     

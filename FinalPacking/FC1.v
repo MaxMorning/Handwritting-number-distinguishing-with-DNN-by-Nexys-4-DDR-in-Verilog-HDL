@@ -16,8 +16,8 @@ module full_connect1(
     output reg [128 * 8 - 1:0] data_to_ram
 );
 
-    parameter   rom_addr_base = 11'h000000,
-                bias_addr_base = 11'h002000;
+    parameter   rom_addr_base = 11'h000,
+                bias_addr_base = 11'h200;
 
     reg bias_get_done;
     reg bias_ask_done;
