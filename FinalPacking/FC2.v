@@ -19,42 +19,10 @@ module full_connect2(
     parameter   rom_addr_base = 11'h000,
                 bias_addr_base = 11'h200;
 
-    reg bias_get_done;
-    reg bias_ask_done;
     reg [7:0] rowCnt;
     reg [128 * 8 - 1:0] biases;
     reg [3:0] status;
     reg [14:0] sum;
-
-    always @ (posedge clk) begin
-        if (!ena) begin
-            overflow <= 1'bz;
-            done <= 0;
-            addr_to_rom <= {11{1'bz}};
-            // addr_to_ram <= {32{1'bz}};
-            opr1_to_MultAdder <= {1024{1'bz}};
-            opr2_to_MultAdder <= {1024{1'bz}};
-        end
-        else if (!iRst_n) begin
-            bias_get_done <= 0;
-            bias_ask_done <= 0;
-            overflow <= 0;
-            done <= 0;
-            rowCnt <= 0;
-            status <= 4'b0000;
-            sum <= 0;
-        end
-        else begin
-            if (bias_ask_done == 0) begin
-                addr_to_rom <= bias_addr_base;
-                bias_ask_done <= 1;
-            end
-            else if (bias_get_done == 0) begin
-                biases = data_from_rom;
-                bias_get_done = 1;
-            end
-        end
-    end
 
     reg [14:0] adder_opr1;
     reg [14:0] adder_opr2;
@@ -68,9 +36,35 @@ module full_connect2(
         .oNum(adder_sum),
         .overflow(adder_overflow)
     );
+
     always @ (posedge clk) begin
-        if (bias_get_done && ena && iRst_n)
+        if (!ena) begin
+            overflow <= 1'bz;
+            done <= 0;
+            addr_to_rom <= {11{1'bz}};
+            // addr_to_ram <= {32{1'bz}};
+            opr1_to_MultAdder <= {1024{1'bz}};
+            opr2_to_MultAdder <= {1024{1'bz}};
+        end
+        else if (!iRst_n) begin
+            overflow <= 0;
+            done <= 0;
+            rowCnt <= 0;
+            status <= 4'b1010;
+            sum <= 0;
+        end
+        else begin
             case (status)
+                4'b1010: // ask bias
+                    begin
+                        status <= 4'b1011;
+                        addr_to_rom <= bias_addr_base;
+                    end
+                4'b1011: // get bias
+                    begin
+                        status <= 4'b1000;
+                        biases = data_from_rom;
+                    end
                 4'b1000: // r = 0
                     begin
                         status <= 4'b0000;
@@ -116,7 +110,8 @@ module full_connect2(
                         done <= 1;
                     end
                 default: 
-                    status <= 4'b1000;
+                    status <= 4'b1010;
             endcase
+        end
     end
 endmodule
