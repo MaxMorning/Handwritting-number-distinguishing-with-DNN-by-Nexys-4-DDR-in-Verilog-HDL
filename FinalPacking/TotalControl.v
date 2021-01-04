@@ -33,12 +33,10 @@ module total_control(
         .resetn(iRst_n)
     );
 
-    reg vga_ena;
     reg vga_rstn;
     wire [32 * 32 - 1:0] user_image;
     vga_module vga_inst(
         .iBusClk(sysClk),
-        .ena(vga_ena),
         .mouseClk(mouseClk),
         .clkVga(clkVga),
         .iRstN(vga_rstn),
@@ -74,29 +72,32 @@ module total_control(
     );
 
     reg [2:0] status;
+    reg [9:0] delayCnt;
 
     always @ (posedge sysClk) begin
         if (!iRst_n) begin
             status <= 3'b000;
-            vga_ena <= 0;
             TPU_ena <= 0;
             display7_ena <= 0;
             vga_rstn <= 1;
             TPU_rstn <= 1;
+            delayCnt <= 0;
         end
         else begin
             case (status)
                 3'b000: // reset
                     begin
                         status <= 3'b001;
-                        vga_ena = 1;
                         vga_rstn = 0;
                     end
                 3'b001: // reset done
+                    if (delayCnt > 1000)
                     begin
                         status <= 3'b010;
                         vga_rstn = 1;
                     end
+                    else
+                        delayCnt = delayCnt + 1;
                 3'b010: // draw
                     begin
                         if (clear) begin

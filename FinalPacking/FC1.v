@@ -3,14 +3,15 @@ module full_connect1(
     input clk,
     input iRst_n,
     input [128 * 8 - 1:0] data_from_rom,
-    input [128 * 8 - 1:0] data_from_ram,
+    input [128 * 8 - 1:0] data_from_ram, // 1 bit
+    input [128 * 8 - 1:0] data_from_exp,
     input [14:0] data_from_MultAdder,
     input overflow_from_MultAdder,
     
     output reg overflow,
     output reg done,
     output reg [10:0] addr_to_rom,
-    output reg [2:0] addr_to_ram,
+    output reg [127:0] data_to_exp,
     output reg [128 * 8 - 1:0] opr1_to_MultAdder,
     output reg [128 * 8 - 1:0] opr2_to_MultAdder,
     output reg [128 * 8 - 1:0] data_to_ram
@@ -43,7 +44,7 @@ module full_connect1(
             overflow <= 1'bz;
             done <= 0;
             addr_to_rom <= {11{1'bz}};
-            addr_to_ram <= {3{1'bz}};
+            data_to_exp <= {128{1'bz}};
             opr1_to_MultAdder <= {1024{1'bz}};
             opr2_to_MultAdder <= {1024{1'bz}};
         end
@@ -77,12 +78,12 @@ module full_connect1(
                     begin
                         status <= 4'b0001;
                         addr_to_rom <= rom_addr_base + 8 * rowCnt + colCnt;
-                        addr_to_ram <= colCnt;
+                        data_to_exp <= data_from_ram[colCnt * 128 + 127 -: 128];
                     end
                 4'b0001: // get w,a ; calc wa
                     begin
                         status <= 4'b0010;
-                        opr1_to_MultAdder <= data_from_ram;
+                        opr1_to_MultAdder <= data_from_exp;
                         opr2_to_MultAdder <= data_from_rom;
                     end
                 4'b0010: // get wa ; calc sum += wa

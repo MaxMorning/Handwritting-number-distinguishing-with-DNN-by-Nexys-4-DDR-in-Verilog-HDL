@@ -1,13 +1,13 @@
 module expand_to_8bit(
-    input wire [32 * 32 - 1:0] data_in,
-    input wire [2:0] addr,
-    output reg [128 * 8 - 1:0] data_out
+    input wire [127:0] data_in,
+    output wire [128 * 8 - 1:0] data_out
 );
-    reg [7:0] i;
-    always @ (*) begin
-        for (i = 0; i <= 127; i = i + 1) begin
-            data_out[8 * (addr * 128 + i) + 7 -:8] <= {data_in[addr * 128 + i], 7'b0000000};
+
+    genvar i;
+    generate
+        for (i = 0; i < 128; i = i + 1) begin : EXP8
+            assign data_out[8 * i + 7 -:8] = {data_in[i], 7'b0000000};
         end
-    end
+    endgenerate
 
 endmodule

@@ -7,7 +7,7 @@ module vga_test_tb;
     wire [3:0] oGreen;
     wire oHs, oVs;
     
-    vga_test inst(
+    vga_module inst(
         .iBusClk(iBusClk),
         .iRstN(iRstN),
         .oRed(oRed),

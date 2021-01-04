@@ -1,6 +1,5 @@
 module vga_module(
     input iBusClk, // Bus Clock
-    input ena, // enable
     input mouseClk, // mouse clk, 5MHz?
     input clkVga, // VGA clock, 40MHz
     input iRstN, // Async reset signal
@@ -114,7 +113,7 @@ module vga_module(
             for (rowCnt = 0;rowCnt < 1024; rowCnt = rowCnt + 1)
                 image[rowCnt] = 0;
         end
-        else if (isActive && ena) begin
+        else if (isActive) begin
             if (hPos <= cursor_x[16:8] + 8 && hPos >= cursor_x[16:8] && vPos <= cursor_y[16:8] + 8 && vPos >= cursor_y[16:8]) begin
                 if (button[2]) begin 
                     oRed <= 4'b0000;

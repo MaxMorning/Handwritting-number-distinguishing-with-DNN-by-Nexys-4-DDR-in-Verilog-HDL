@@ -14,7 +14,7 @@ module TPU_Control(
     reg FC1_rstn, FC2_rstn; 
     wire FC1_done, FC2_done;
 
-    wire [2:0] addr_fc1_expand;
+    wire [127:0] data_fc1_expand;
     wire [128 * 8 - 1:0] data_expand_fc1;
 
     wire [10:0] addr_control_rom;
@@ -65,7 +65,6 @@ module TPU_Control(
 
     expand_to_8bit expand(
         .data_in(input_image),
-        .addr(addr_fc1_expand),
         .data_out(data_expand_fc1)
     );
 
@@ -75,14 +74,15 @@ module TPU_Control(
         .clk(clk),
         .iRst_n(FC1_rstn),
         .data_from_rom(data_rom_fc1),
-        .data_from_ram(data_expand_fc1),
+        .data_from_ram(input_image),
+        .data_from_exp(data_expand_fc1),
         .data_from_MultAdder(data_MultAdder_fc1),
         .overflow_from_MultAdder(overflow_MultAdder_fc1),
 
         .overflow(overflow_fc1),
         .done(FC1_done),
         .addr_to_rom(addr_fc1_rom),
-        .addr_to_ram(addr_fc1_expand),
+        .data_to_exp(data_fc1_expand),
         .opr1_to_MultAdder(opr1_fc1_MultAdder),
         .opr2_to_MultAdder(opr2_fc1_MultAdder),
         .data_to_ram(data_fc1_fc2)
