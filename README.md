@@ -5,14 +5,13 @@ Digital Logic Lecture Final Project in the first term of year 2020-21
 Handwritting number distinguishing with CNN by Nexys 4 DDR in Verilog HDL.
 
 ## Data Type 
-16 bit float
+bit float
 ### 1 bit sign
-### 15 bit tail 
-### 16'b1000000000000000 means 1
-### eg. 16'b0100000000000000 means 1.01b = 1.25d
+### (bit - 1) bit tail 
+### (bit)'b1000000000000000 means 1
 ## Data Addr
 
-block memory 2048b * 1036
+block memory (128 * bit)b * 1036
 
 0x000 Layer1 w0 0
 
