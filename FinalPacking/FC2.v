@@ -2,34 +2,33 @@ module full_connect2(
     input ena,
     input clk,
     input iRst_n,
-    input [128 * 8 - 1:0] data_from_rom,
-    input [128 * 8 - 1:0] data_from_ram,
-    input [14:0] data_from_MultAdder,
+    input [128 * 16 - 1:0] data_from_rom,
+    input [128 * 16 - 1:0] data_from_ram,
+    input [30:0] data_from_MultAdder,
     input overflow_from_MultAdder,
     
     output reg overflow,
     output reg done,
     output reg [10:0] addr_to_rom,
-    // output reg [31:0] addr_to_ram,
-    output reg [128 * 8 - 1:0] opr1_to_MultAdder,
-    output reg [128 * 8 - 1:0] opr2_to_MultAdder,
-    output reg [10 * 8 - 1:0] data_to_ram
+    output reg [128 * 16 - 1:0] opr1_to_MultAdder,
+    output reg [128 * 16 - 1:0] opr2_to_MultAdder,
+    output reg [10 * 16 - 1:0] data_to_ram
 );
 
     parameter   rom_addr_base = 11'h401,
                 bias_addr_base = 11'h40b;
 
     reg [7:0] rowCnt;
-    reg [128 * 8 - 1:0] biases;
+    reg [128 * 16 - 1:0] biases;
     reg [3:0] status;
-    reg [14:0] sum;
+    reg [30:0] sum;
 
-    reg [14:0] adder_opr1;
-    reg [14:0] adder_opr2;
+    reg [30:0] adder_opr1;
+    reg [30:0] adder_opr2;
 
-    wire [14:0] adder_sum;
+    wire [30:0] adder_sum;
     wire adder_overflow;
-    Float8Adder adder(
+    Float16Adder adder(
         .iNum1(adder_opr1),
         .iNum2(adder_opr2),
 
@@ -42,9 +41,8 @@ module full_connect2(
             overflow <= 1'bz;
             done <= 0;
             addr_to_rom <= {11{1'bz}};
-            // addr_to_ram <= {32{1'bz}};
-            opr1_to_MultAdder <= {1024{1'bz}};
-            opr2_to_MultAdder <= {1024{1'bz}};
+            opr1_to_MultAdder <= {(128 * 16){1'bz}};
+            opr2_to_MultAdder <= {(128 * 16){1'bz}};
         end
         else if (!iRst_n) begin
             overflow <= 0;
@@ -74,7 +72,6 @@ module full_connect2(
                     begin
                         status <= 4'b0001;
                         addr_to_rom <= rom_addr_base + rowCnt;
-                        // addr_to_ram <= ram_addr_base + rowCnt;
                     end
                 4'b0001: // get w,a ; calc wa
                     begin
@@ -86,14 +83,14 @@ module full_connect2(
                     begin
                         status <= 4'b0011;
                         overflow <= overflow | overflow_from_MultAdder;
-                        adder_opr1 = {biases[8 * rowCnt + 7 -: 8], 7'b0000000};
+                        adder_opr1 = {biases[16 * rowCnt + 15 -: 16], 15'b000000000000000};
                         adder_opr2 <= data_from_MultAdder;
                     end
                 4'b0011: // get wa + b ; ++r
                     begin
                         status <= 4'b0100;
                         overflow = overflow | adder_overflow;
-                        data_to_ram[8 * rowCnt + 7 -: 8] = (adder_sum[14] == 0 || adder_sum[13:7] == 0) ? adder_sum[14:7] : 8'b00000000; // relu
+                        data_to_ram[16 * rowCnt + 15 -: 16] = (adder_sum[30] == 0 || adder_sum[29:0] == 0) ? adder_sum[30:15] : 16'b0000000000000000; // relu
                         rowCnt = rowCnt + 1;
                         sum = 0;
                     end
