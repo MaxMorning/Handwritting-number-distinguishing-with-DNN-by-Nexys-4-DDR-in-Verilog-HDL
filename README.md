@@ -11,6 +11,9 @@ Handwritting number distinguishing with CNN by Nexys 4 DDR in Verilog HDL.
 ### 8'b10000000 means 1
 ### eg. 8'b01000000 means 1.01b = 1.25d
 ## Data Addr
+
+block memory 1024b * 1036
+
 0x000 Layer1 w0 0
 
 0x001 Layer1 w0 1

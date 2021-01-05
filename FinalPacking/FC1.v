@@ -18,7 +18,7 @@ module full_connect1(
 );
 
     parameter   rom_addr_base = 11'h000,
-                bias_addr_base = 11'h200;
+                bias_addr_base = 11'h400;
 
     reg [3:0] colCnt;
     reg [7:0] rowCnt;

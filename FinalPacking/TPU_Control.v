@@ -127,7 +127,7 @@ module TPU_Control(
         end
         else if (!iRst_n) begin
             status <= 0;
-            num_out <= 4'b1111; // calculating
+            num_out <= 4'b0; // calculating
             done <= 0;
             FC1_ena <= 0;
             FC2_ena <= 0;
@@ -174,6 +174,7 @@ module TPU_Control(
                             status <= 3'b100;
                             overflow = overflow | overflow_fc2;
                             FC2_ena = 0;
+                            num_out = data_output;
                         end
                         else
                             status <= 3'b011;
