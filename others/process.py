@@ -1,33 +1,37 @@
 import numpy as npy
 
 def convert(num):
-    if abs(num - 1.0) < 1.0 / 2048:
-        return '800'
-    elif abs(num) < 1.0 / 2048:
-        return '000'
+    if abs(num - 1.0) < 1.0 / 32768:
+        return '8000'
+    elif abs(num) < 1.0 / 32768:
+        return '0000'
     elif num < 0:
         num = -num
-        num *= 2048
-        num += 2048
+        num *= 32768
+        num += 32768
         num = int(num)
         n_str = str(hex(num))[2:]
         if len(n_str) == 1:
-            n_str = '00' + n_str
+            n_str = '000' + n_str
         elif len(n_str) == 2:
+            n_str = '00' + n_str
+        elif len(n_str) == 3:
             n_str = '0' + n_str
         return n_str
     else:
-        num *= 2048
+        num *= 32768
         num = int(num)
         n_str = str(hex(num))[2:]
         if len(n_str) == 1:
-            n_str = '00' + n_str
+            n_str = '000' + n_str
         elif len(n_str) == 2:
+            n_str = '00' + n_str
+        elif len(n_str) == 3:
             n_str = '0' + n_str
         return n_str
 
 
-file = open('tensor.coe', 'w')
+file = open('16bit.coe', 'w')
 file_str = "memory_initialization_radix=16;\nmemory_initialization_vector=\n"
 
 fc1_w = npy.load('dense_kernel_0.npy')
@@ -63,7 +67,7 @@ for i in range(128):
     if i < 10:
         unit_128_8 += convert(fc2_b[i])
     else:
-        unit_128_8 += '000'
+        unit_128_8 += '0000'
 file_str += unit_128_8 + ';'
 
 file.write(file_str)

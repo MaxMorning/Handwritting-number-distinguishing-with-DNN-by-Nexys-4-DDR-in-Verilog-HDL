@@ -68,9 +68,11 @@ module full_connect1(
             case (status)
                 4'b1010: // ask bias
                     begin
-                        status <= 4'b1011;
+                        status <= 4'b1100;
                         addr_to_rom <= bias_addr_base;
                     end
+                4'b1100: // wait for bias
+                    status = 4'b1011;
                 4'b1011: // get bias
                     begin
                         status <= 4'b1000;
@@ -84,10 +86,12 @@ module full_connect1(
                     end
                 4'b0000: // ask w,a
                     begin
-                        status <= 4'b0001;
+                        status <= 4'b1101;
                         addr_to_rom <= rom_addr_base + 8 * rowCnt + colCnt;
                         data_to_exp <= data_from_ram[colCnt * 128 + 127 -: 128];
                     end
+                4'b1101: // wait for w
+                    status = 4'b0001;
                 4'b0001: // get w,a ; calc wa
                     begin
                         status <= 4'b0010;

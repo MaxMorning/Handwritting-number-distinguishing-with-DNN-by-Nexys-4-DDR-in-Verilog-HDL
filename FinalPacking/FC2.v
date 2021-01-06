@@ -55,9 +55,11 @@ module full_connect2(
             case (status)
                 4'b1010: // ask bias
                     begin
-                        status <= 4'b1011;
+                        status <= 4'b1100;
                         addr_to_rom <= bias_addr_base;
                     end
+                4'b1100: // wait for bias
+                    status = 4'b1011;
                 4'b1011: // get bias
                     begin
                         status <= 4'b1000;
@@ -70,9 +72,11 @@ module full_connect2(
                     end
                 4'b0000: // ask w,a
                     begin
-                        status <= 4'b0001;
+                        status <= 4'b1101;
                         addr_to_rom <= rom_addr_base + rowCnt;
                     end
+                4'b1101: // wait for w
+                    status = 4'b0001;
                 4'b0001: // get w,a ; calc wa
                     begin
                         status <= 4'b0010;
@@ -90,7 +94,7 @@ module full_connect2(
                     begin
                         status <= 4'b0100;
                         overflow = overflow | adder_overflow;
-                        data_to_ram[bit * rowCnt + (bit - 1) -: bit] = (adder_sum[(2 * bit - 2)] == 0 || adder_sum[(2 * bit - 3):0] == 0) ? adder_sum[(2 * bit - 2):(bit - 1)] : {bit{1'b0}}; // relu
+                        data_to_ram[bit * rowCnt + (bit - 1) -: bit] = adder_sum[(2 * bit - 2):(bit - 1)];
                         rowCnt = rowCnt + 1;
                         sum = 0;
                     end
