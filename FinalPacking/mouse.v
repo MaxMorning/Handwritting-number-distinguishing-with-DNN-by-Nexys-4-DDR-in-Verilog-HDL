@@ -82,10 +82,10 @@ module ps2_rx(
 endmodule
 
 `timescale 1ns / 1ps
-/////////////////////////////////////
+
 module ps2_tx(
 	input wire clk, reset,
-	input wire send_en,//****
+	input wire send_en,
 	input wire [7:0] d_send,
 	inout wire ps2d, ps2c,
 	output reg rxen_out, tx_done_sig
