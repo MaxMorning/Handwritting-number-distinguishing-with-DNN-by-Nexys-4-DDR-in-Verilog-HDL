@@ -1,13 +1,13 @@
 import numpy as npy
 
 def convert(num):
-    if abs(num - 1.0) < 1.0 / 32768:
+    if abs(num - 4.0) < 1.0 / 8192:
         return '8000'
-    elif abs(num) < 1.0 / 32768:
+    elif abs(num) < 1.0 / 8192:
         return '0000'
     elif num < 0:
         num = -num
-        num *= 32768
+        num *= 8192
         num += 32768
         num = int(num)
         n_str = str(hex(num))[2:]
@@ -19,7 +19,7 @@ def convert(num):
             n_str = '0' + n_str
         return n_str
     else:
-        num *= 32768
+        num *= 8192
         num = int(num)
         n_str = str(hex(num))[2:]
         if len(n_str) == 1:
