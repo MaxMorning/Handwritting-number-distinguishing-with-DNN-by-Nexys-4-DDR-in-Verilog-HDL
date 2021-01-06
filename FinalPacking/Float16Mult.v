@@ -1,5 +1,3 @@
-parameter bit = 8;
-
 module Float16Mult(
     input [(bit - 1):0] iNum1,
     input [(bit - 1):0] iNum2,

@@ -1,1 +1,0 @@
-parameter bit = 8;
