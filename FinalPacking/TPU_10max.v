@@ -33,12 +33,16 @@ module max_in_10(
                     data_max = data_in[cnt * bit + (bit - 1) -: bit];
                     index = cnt;
                 end
+                else
+                    index = index;
             end
             else
                 if (data_max[(bit - 1)] == 1) begin
                     data_max = data_in[cnt * bit + (bit - 1) -: bit];
                     index = cnt;
                 end
+                else
+                    index = index;
         end
     end
 endmodule

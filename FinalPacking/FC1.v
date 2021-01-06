@@ -4,19 +4,27 @@ module full_connect1(
     input iRst_n,
     input [128 * bit - 1:0] data_from_rom,
     input [32 * 32 - 1:0] data_from_ram, // 1 bit
-    input [128 * bit - 1:0] data_from_exp,
+    // input [128 * bit - 1:0] data_from_exp,
     input [(2 * bit - 2):0] data_from_MultAdder,
     input overflow_from_MultAdder,
     
     output reg overflow,
     output reg done,
     output reg [10:0] addr_to_rom,
-    output reg [127:0] data_to_exp,
+    // output reg [127:0] data_to_exp,
     output reg [128 * bit - 1:0] opr1_to_MultAdder,
     output reg [128 * bit - 1:0] opr2_to_MultAdder,
     output reg [128 * bit - 1:0] data_to_ram
 );
 
+    reg [127:0] data_to_exp;
+    wire [128 * bit - 1:0] data_from_exp;
+    genvar i;
+    generate
+        for (i = 0; i < 128; i = i + 1) begin : GEN
+            assign data_from_exp[i * bit + (bit - 1) -: bit] = {data_to_exp[i], {(bit - 1){1'b0}}};
+        end
+    endgenerate
     parameter   rom_addr_base = 11'h000,
                 bias_addr_base = 11'h400;
 

@@ -1,5 +1,3 @@
-//*********************************************************************************************
-//PS2接收模块（鼠标发送，电脑接收）
 module ps2_rx(
 	input wire clk, reset,
 	input wire ps2d, //ps2 data
@@ -10,16 +8,13 @@ module ps2_rx(
 	output wire [7:0] d_rec
 );
 
-	// symbolic state declaration
 	reg [7:0] filter_reg;
 	wire [7:0] filter_next;
 	reg  ps2count_reg;
 	wire ps2count_next;
 
 	wire fall_edge;
-	//=================================================
-	// filter and falling-edge check for ps2c
-	//=================================================
+
 	always @(posedge clk)
 		if (!reset) begin
 			filter_reg <= 0;
@@ -33,11 +28,6 @@ module ps2_rx(
 	assign filter_next = {ps2c, filter_reg[7:1]};
 	assign ps2count_next = (filter_reg==8'b11111111) ? 1'b1 :(filter_reg==8'b00000000) ? 1'b0 :ps2count_reg;
 	assign fall_edge = ps2count_reg & ~ps2count_next;
-
-	/**************************************************************************************/
-	/*相当于一个8位的移位寄存器，将PS_CLK的输入移入其中，即对PS_CLK连续采样超过8次，采样值都为1，
-	**则此时PS_CLK处于稳定高电平，反之处于稳定的低电平，若由高到低变化，说明PS2时钟下降沿到来.
-	/**************************************************************************************/
 	localparam [1:0] idle = 2'b00,
 				receive = 2'b01,
 				done = 2'b10;
@@ -45,7 +35,7 @@ module ps2_rx(
 	reg [1:0] state_reg, state_next;
 	reg [3:0]  num_reg, num_next;
 	reg [10:0] data_reg, data_next;
-	///////////////////////////////////////////
+
 	always @(posedge clk)
 		if (!reset) begin
 			state_reg <= idle;
@@ -57,7 +47,7 @@ module ps2_rx(
 			num_reg <= num_next;
 			data_reg <= data_next;
 		end
-	// FSMD next-state logic
+
 	always @  ( * ) begin
 		state_next = state_reg;
 		num_next = num_reg;
@@ -68,7 +58,6 @@ module ps2_rx(
 		case (state_reg)
 			idle: 
 				if (fall_edge & rx_en) begin
-					// shift in start bit
 					data_next = {ps2d, data_reg[10:1]};
 					num_next = 4'd9;
 					state_next = receive;
@@ -81,14 +70,14 @@ module ps2_rx(
 						else
 							num_next = num_reg - 1;
 					end
-			done: begin // 1 extra clock to complete the last shift 
+			done: begin 
 				state_next = idle;
 				rx_done_sig = 1'b1;
 			end
 		endcase
 	end
 	// output
-	assign d_rec = data_reg[8:1]; // 接收到的数据
+	assign d_rec = data_reg[8:1];
 
 endmodule
 
@@ -116,12 +105,8 @@ module ps2_tx(
 
 	reg ps2c_out, ps2d_out;
 	reg tri_c, tri_d;
-	wire odd_par;    //奇校验
-	// body
-	//=================================================
-	// filter and falling-edge tick generation for ps2c
-	//=================================================
-	/*****************************************************************/
+	wire odd_par;
+
 	reg H2L_F1;
 	reg H2L_F2;
 	
@@ -138,13 +123,7 @@ module ps2_tx(
 	/****************************/
 	
 	assign fall_edge = H2L_F2 & !H2L_F1;
-	//=================================================
-	//*************************************************
-	/**********1. XX_reg ---> XX_next *****************
-	***********2. XX_next = .......   *****************
-	***********3. XX_next ---> XX_reg *****************
-	**************************************************/
-	//=================================================
+
 	// FSMD state & data registers
 	always @(posedge clk)
 		if (!reset) begin
@@ -178,18 +157,18 @@ module ps2_tx(
 		tx_done_sig = 1'b0;
 		case (state_reg)
 			idle: begin
-				rxen_out = 1'b1;//@@@@@@@@@@@@@@@@@@@@@@@
-				if (send_en) begin//**** 
+				rxen_out = 1'b1;
+				if (send_en) begin
 					data_next = {odd_par, d_send};
 					count_next = 13'h1fff; // 2^13-1 to delay 164us
-					state_next = rts;  //请求发送
+					state_next = rts; 
 				end
 			end
 			rts: begin// request to send 
 				ps2c_out = 1'b0;
 				tri_c = 1'b1;
 				count_next = count_reg - 1;
-				if (count_reg==0)  //FPGA拉低PS2C 164us
+				if (count_reg==0)
 				state_next = start;
 			end
 			start: begin 
@@ -211,7 +190,6 @@ module ps2_tx(
 						num_next = num_reg - 1;
 				end
 			end
-	//**************************************
 			stop: // assume floating high for ps2d
 			if (fall_edge) begin
 				state_next = idle;
@@ -225,13 +203,10 @@ module ps2_tx(
 endmodule
 
 
-//******************************************************************************************************
-//双向通信模块
 `timescale 1ns / 1ps
-////////////////////////////////////
 module ps2_rxtx(
 	input wire clk, reset,
-	input wire send_en,//****
+	input wire send_en,
 	inout wire ps2d, ps2c,
 	input wire [7:0] d_send,
 
@@ -266,10 +241,8 @@ module ps2_rxtx(
 
 endmodule
 
-//*************************************************************************************************************
-//**************************************鼠标接口电路模块**********************************
 `timescale 1ns / 1ps
-////////////////////////////////
+
 module mouse(
 	input wire clk, reset,
 	inout wire ps2d, ps2c,
@@ -330,7 +303,7 @@ module mouse(
 	always @  ( * ) begin
 		state_next = state_reg;
 
-		send_en = 1'b0;     //@@@@
+		send_en = 1'b0;
 		done_sig = 1'b0;
 
 		x_next = x_reg;
@@ -339,7 +312,7 @@ module mouse(
 
 		case (state_reg)
 			init1: begin
-				send_en = 1'b1;      //@@@@@
+				send_en = 1'b1;
 				state_next = init2;
 			end
 			init2: // wait for send to complete
