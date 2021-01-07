@@ -1,26 +1,23 @@
 import numpy as npy
 
 def convert(num):
-    if abs(num - 4.0) < 1.0 / 8192:
-        return '8000'
-    elif abs(num) < 1.0 / 8192:
-        return '0000'
-    elif num < 0:
-        num = -num
-        num *= 8192
-        num += 32768
-        num = int(num)
+    if num < 0:
+        # num = -num
+        num *= 1024
+        # num += 32768
+        num = int(num - 0.5)
+        num = 65535 + num
         n_str = str(hex(num))[2:]
         if len(n_str) == 1:
-            n_str = '000' + n_str
+            n_str = 'fff' + n_str
         elif len(n_str) == 2:
-            n_str = '00' + n_str
+            n_str = 'ff' + n_str
         elif len(n_str) == 3:
-            n_str = '0' + n_str
+            n_str = 'f' + n_str
         return n_str
     else:
-        num *= 8192
-        num = int(num)
+        num *= 1024
+        num = int(num + 0.5)
         n_str = str(hex(num))[2:]
         if len(n_str) == 1:
             n_str = '000' + n_str

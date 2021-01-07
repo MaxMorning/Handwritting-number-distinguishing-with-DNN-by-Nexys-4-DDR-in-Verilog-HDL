@@ -150,10 +150,10 @@ module vga_module(
             if (button[1]) begin
                 if (!image[{cursor_x[16:12], cursor_y[16:12]}])
                     image[{cursor_x[16:12], cursor_y[16:12]}] = 1;
-                if (!image[{cursor_x[16:12] + 1, cursor_y[16:12]}])
-                    image[{cursor_x[16:12] + 1, cursor_y[16:12]}] = 1;
-                if (!image[{cursor_x[16:12] - 1, cursor_y[16:12]}])
-                    image[{cursor_x[16:12] - 1, cursor_y[16:12]}] = 1;
+                if (!image[{cursor_x[16:12], cursor_y[16:12]} + 32])
+                    image[{cursor_x[16:12], cursor_y[16:12]} + 32] = 1;
+                if (!image[{cursor_x[16:12], cursor_y[16:12]} - 32])
+                    image[{cursor_x[16:12], cursor_y[16:12]} - 32] = 1;
                 if (!image[{cursor_x[16:12], cursor_y[16:12] + 1}])
                     image[{cursor_x[16:12], cursor_y[16:12] + 1}] = 1;
                 if (!image[{cursor_x[16:12], cursor_y[16:12] - 1}])

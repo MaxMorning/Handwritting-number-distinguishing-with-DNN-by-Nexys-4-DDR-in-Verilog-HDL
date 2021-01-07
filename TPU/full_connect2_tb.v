@@ -59,22 +59,20 @@
 //endmodule
 `timescale 1ns / 1ps
 
-module multadd_tb;
-    reg [128 * 16 - 1:0] data_in1;
-    reg [128 * 16 - 1:0] data_in2;
+module mult_tb;
+    reg [16 - 1:0] data_in1;
+    reg [16 - 1:0] data_in2;
 
     wire [(2 * 16 - 2):0] data_out;
-    wire overflow;
     
-    TPU_MultAdd inst(
-        .data_in1(data_in1),
-        .data_in2(data_in2),
-        .data_out(data_out),
-        .overflow(overflow)
+    Float16Mult inst(
+        .iNum1(data_in1),
+        .iNum2(data_in2),
+        .oNum(data_out)
     );
     
     initial begin
-        data_in1 = {128{16'b0000010000000000}};
-        data_in2 = {128{16'b0000001000000000}};
+        data_in1 = 16'b0001010101001100;
+        data_in2 = 16'b0001011101001100;
     end
 endmodule
