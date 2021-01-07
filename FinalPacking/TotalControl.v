@@ -117,7 +117,7 @@ module total_control(
                         if (done) begin
                             status <= 3'b101;
                             display7_ena <= 1;
-                            TPU_ena <= 0;
+                            // TPU_ena <= 0;
                         end
                         else
                             status <= 3'b100;

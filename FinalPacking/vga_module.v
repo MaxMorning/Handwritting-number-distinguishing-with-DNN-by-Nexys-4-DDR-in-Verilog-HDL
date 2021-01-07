@@ -134,15 +134,17 @@ module vga_module(
             else begin
 //                index = {hPos[10:6], vPos[10:6]};
 //                if (image[index] == 1) begin
-                if (hPos < 512 && vPos < 512 && image[{hPos[8:4], vPos[8:4]}] == 1) begin
-                    oRed <= 4'b1111;
-                    oGreen <= 4'b0000;
-                    oBlue <= 4'b1111;
-                end
-                else begin 
-                    oRed <= 4'b1000;
-                    oGreen <= 4'b1000;
-                    oBlue <= 4'b1000;
+                if (hPos < 512 && vPos < 512) begin
+                    if (image[{hPos[8:4], vPos[8:4]}] == 1) begin
+                        oRed <= 4'b1111;
+                        oGreen <= 4'b0000;
+                        oBlue <= 4'b1111;
+                    end
+                    else begin 
+                        oRed <= 4'b1000;
+                        oGreen <= 4'b1000;
+                        oBlue <= 4'b1000;
+                    end
                 end
                 
             end
@@ -161,8 +163,8 @@ module vga_module(
 //            end
             if (button[1] && !image[{cursor_x[16:12], cursor_y[16:12]}]) begin
                 image[{cursor_x[16:12], cursor_y[16:12]}] = 1;
-                image[{(cursor_x[16:12] + 1), cursor_y[16:12]}] = 1;
-                image[{(cursor_x[16:12] - 1), cursor_y[16:12]}] = 1;
+                image[{(cursor_x[16:12] + 5'b00001), cursor_y[16:12]}] = 1;
+                image[{(cursor_x[16:12] - 5'b00001), cursor_y[16:12]}] = 1;
                 image[{cursor_x[16:12], cursor_y[16:12] + 1}] = 1;
                 image[{cursor_x[16:12], cursor_y[16:12] - 1}] = 1;
             end
