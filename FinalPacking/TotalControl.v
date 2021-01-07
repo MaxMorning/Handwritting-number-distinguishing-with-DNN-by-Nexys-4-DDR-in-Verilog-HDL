@@ -5,7 +5,6 @@ module total_control(
     //user button
     input iRst_n,
     input confirm,
-    input clear,
     
     //mouse io
     inout ps2clk,
@@ -98,10 +97,7 @@ module total_control(
                         delayCnt = delayCnt + 1;
                 3'b010: // draw
                     begin
-                        if (clear) begin
-                            status <= 3'b000;
-                        end
-                        else if (confirm) begin
+                        if (confirm) begin
                             status <= 3'b110;
                             TPU_ena = 1;
                             TPU_rstn = 0;
@@ -128,10 +124,7 @@ module total_control(
                     end
                 3'b101: // display result
                     begin
-                        if (clear)
-                            status <= 3'b000;
-                        else
-                            status <= 3'b101;
+                       status <= 3'b101;
                     end
                 default: 
                     status <= 3'b000;

@@ -114,7 +114,7 @@ module vga_module(
                 image[rowCnt] = 0;
         end
         else if (isActive) begin
-            if (hPos <= cursor_x[16:8] + 8 && hPos >= cursor_x[16:8] && vPos <= cursor_y[16:8] + 8 && vPos >= cursor_y[16:8]) begin
+            if (hPos <= cursor_x[16:8] + 8 && hPos >= cursor_x[16:8] && vPos <= cursor_y[16:8] + 16 && vPos >= cursor_y[16:8]) begin
                 if (button[2]) begin 
                     oRed <= 4'b0000;
                     oBlue <= 4'b0000;
@@ -140,9 +140,9 @@ module vga_module(
                     oBlue <= 4'b1111;
                 end
                 else begin 
-                    oRed <= 4'b1111;
-                    oGreen <= 4'b1111;
-                    oBlue <= 4'b1111;
+                    oRed <= 4'b1000;
+                    oGreen <= 4'b1000;
+                    oBlue <= 4'b1000;
                 end
                 
             end

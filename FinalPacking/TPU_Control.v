@@ -98,67 +98,67 @@ module TPU_Control(
 
     always @ (posedge clk) begin
         if (!ena) begin
-            // num_out <= 4'bzzzz;
-            done <= 1'b0;
+            num_out = 4'bzzzz;
+            done = 1'bz;
         end
         else if (!iRst_n) begin
-            status <= 0;
-            num_out <= 4'b0; // calculating
-            done <= 0;
-            FC1_ena <= 0;
-            FC2_ena <= 0;
-            FC1_rstn <= 1;
-            FC2_rstn <= 1;
+            status = 0;
+            num_out = 4'b0; // calculating
+            done = 0;
+            FC1_ena = 0;
+            FC2_ena = 0;
+            FC1_rstn = 1;
+            FC2_rstn = 1;
         end
         else begin
             case (status)
                 3'b000: // FC1 enabled, rst
                     begin
-                        status <= 3'b101;
+                        status = 3'b101;
                         FC1_ena = 1;
                         FC1_rstn = 0;
                     end
                 3'b101: // FC1 rst done
                     begin
-                        status <= 3'b001;
-                        FC1_rstn <= 1;
+                        status = 3'b001;
+                        FC1_rstn = 1;
                     end
                 3'b001: // FC1 done ?
                     begin
                         if (FC1_done) begin
-                            status <= 3'b010;
+                            status = 3'b010;
                             FC1_ena = 0;
                         end
                         else
-                            status <= 3'b001;
+                            status = 3'b001;
                     end
                 3'b010: // FC2 enabled, rst
                     begin
-                        status <= 3'b110;
+                        status = 3'b110;
                         FC2_ena = 1;
                         FC2_rstn = 0;
                     end
                 3'b110: // FC2 rst done
                     begin
-                        status <= 3'b011;
-                        FC2_rstn <= 1;
+                        status = 3'b011;
+                        FC2_rstn = 1;
                     end
                 3'b011: // FC2 done ?
                     begin
                         if (FC2_done) begin
-                            status <= 3'b100;
+                            status = 3'b100;
                             FC2_ena = 0;
                             num_out = data_output;
                         end
                         else
-                            status <= 3'b011;
+                            status = 3'b011;
                     end
                 3'b100: // set done 
                     begin
-                        done <= 1;
+                        done = 1;
                     end
                 default: 
-                    status <= 3'b000;
+                    status = 3'b000;
             endcase
         end
     end
