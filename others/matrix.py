@@ -27,6 +27,3 @@ fc2 += fc2_b
 
 print(fc2)
 
-result = tf.keras.activations.softmax(fc2)
-print(result)
-

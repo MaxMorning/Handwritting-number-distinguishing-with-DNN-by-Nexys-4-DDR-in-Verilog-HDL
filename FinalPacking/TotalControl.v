@@ -21,7 +21,6 @@ module total_control(
     output [6:0] num_display,
 
     // light interface
-    output wire overflow,
     output wire done
 );
 
@@ -60,7 +59,6 @@ module total_control(
         .input_image(user_image),
 
         .num_out(num_out),
-        .overflow(overflow),
         .done(done)
     );
 
@@ -123,6 +121,7 @@ module total_control(
                         if (done) begin
                             status <= 3'b101;
                             display7_ena <= 1;
+                            TPU_ena <= 0;
                         end
                         else
                             status <= 3'b100;
