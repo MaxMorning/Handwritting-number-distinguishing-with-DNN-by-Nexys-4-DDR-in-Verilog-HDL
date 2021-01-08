@@ -7,7 +7,16 @@ module image_process(
     genvar i;
     generate
         for (i = 0; i < 1024; i = i + 1) begin : PROCESS
-            assign out_image[1023 - i] = in_image[i] | in_image[(i + 1024 - 1) % 1024] & in_image[(i + 1024 - 32) % 1024] | in_image[(i + 1024 - 32) % 1024] & in_image[(i + 1024 - 33) % 1024] | in_image[(i + 1024 - 1) % 1024] & in_image[(i + 1024 - 33) % 1024];
+            assign out_image[1023 - i] = in_image[i] 
+                                        | in_image[(i - 1 + 1024) % 1024] 
+                                        | in_image[(i - 32 + 1024) % 1024] 
+                                        | in_image[(i - 31 + 1024) % 1024] 
+                                        | in_image[(i + 31) % 1024] 
+                                        | in_image[(i + 32) % 1024] 
+                                        | in_image[(i + 33) % 1024]
+                                        | in_image[(i + 34) % 1024] 
+                                        | in_image[(i + 64) % 1024]
+                                        | in_image[(i + 65) % 1024];
         end
     endgenerate
 endmodule
