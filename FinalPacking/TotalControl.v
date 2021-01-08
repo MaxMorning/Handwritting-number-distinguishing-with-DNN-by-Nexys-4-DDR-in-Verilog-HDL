@@ -20,7 +20,7 @@ module total_control(
     output [6:0] num_display,
 
     // light interface
-    output wire done
+    output reg done
 );
 
     wire mouseClk, clkVga, TPU_clk;
@@ -34,7 +34,6 @@ module total_control(
 
     reg vga_rstn;
     wire [32 * 32 - 1:0] user_image;
-    wire [32 * 32 - 1:0] processed_image;
     vga_module vga_inst(
         .iBusClk(sysClk),
         .mouseClk(mouseClk),
@@ -50,15 +49,11 @@ module total_control(
         .image(user_image)
     );
 
-    image_process process_inst(
-        .in_image(user_image),
-        .out_image(processed_image)
-    );
-
     reg TPU_ena;
     reg TPU_rstn;
     wire [3:0] num_out;
     reg [32 * 32 - 1:0] in_image;
+    wire TPU_done;
     TPU_Control tpu_inst(
         .clk(TPU_clk),
         .ena(TPU_ena),
@@ -66,7 +61,7 @@ module total_control(
         .input_image(in_image),
 
         .num_out(num_out),
-        .done(done)
+        .done(TPU_done)
     );
 
     reg display7_ena;
@@ -87,6 +82,7 @@ module total_control(
             vga_rstn <= 1;
             TPU_rstn <= 1;
             delayCnt <= 0;
+            done <= 0;
         end
         else begin
             case (status)
@@ -107,7 +103,7 @@ module total_control(
                     begin
                         if (confirm) begin
                             status = 3'b011;
-                            in_image = processed_image;
+                            in_image = user_image;
                             TPU_ena = 1;
                             TPU_rstn = 0;
                         end
@@ -124,7 +120,7 @@ module total_control(
 
                 3'b100: // TPU Calculating , waiting
                     begin
-                        if (done) begin
+                        if (TPU_done) begin
                             status = 3'b101;
                             display7_ena = 1;
                             // TPU_ena = 0;
@@ -135,6 +131,7 @@ module total_control(
                 3'b101: // display result
                     begin
                        status = 3'b101;
+                       done = 1;
                     end
                 default: 
                     status = 3'b000;

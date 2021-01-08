@@ -10,8 +10,15 @@ module vga_module(
     output reg [3:0] oBlue, // blue signal
     output oHs, // Hori sync
     output oVs, // Vert sync
-    output reg [32 * 32 - 1:0] image 
+    output wire [32 * 32 - 1:0] image 
 );
+    reg [32 * 32 - 1:0] ori_image;
+    wire [32 * 32 - 1:0] show_image;
+    image_process process_inst(
+        .in_image(ori_image),
+        .show_image(show_image),
+        .out_image(image)
+    );
 
     // 800 * 600
     parameter   C_H_SYNC_PULSE   = 128, 
@@ -109,7 +116,7 @@ module vga_module(
             oBlue <= 4'b0000;
             // image <= 1024'd0;
             for (rowCnt = 0;rowCnt < 1024; rowCnt = rowCnt + 1)
-                image[rowCnt] = 0;
+                ori_image[rowCnt] = 0;
         end
         else if (isActive) begin
             if (hPos <= cursor_x[16:8] + 16 && hPos >= cursor_x[16:8] && vPos <= cursor_y[16:8] + 16 && vPos >= cursor_y[16:8]) begin
@@ -132,7 +139,7 @@ module vga_module(
             else begin
 //                index = {hPos[10:6], vPos[10:6]};
 //                if (image[index] == 1) begin
-                if (hPos < 512 && vPos < 512 && image[{hPos[8:4], vPos[8:4]}] == 1) begin
+                if (hPos < 512 && vPos < 512 && show_image[{hPos[8:4], vPos[8:4]}] == 1) begin
                     oRed <= 4'b1111;
                     oGreen <= 4'b0000;
                     oBlue <= 4'b1111;
@@ -150,8 +157,8 @@ module vga_module(
                 
             end
             
-            if (button[1] && !image[{cursor_x[16:12], cursor_y[16:12]}]) begin
-                image[{cursor_x[16:12], cursor_y[16:12]}] = 1;
+            if (button[1] && !ori_image[{cursor_x[16:12], cursor_y[16:12]}]) begin
+                ori_image[{cursor_x[16:12], cursor_y[16:12]}] = 1;
             end
 //            else if (button[0] && image[{cursor_x[16:12], cursor_y[16:12]}])
 //                image[{cursor_x[16:12], cursor_y[16:12]}] = 0;

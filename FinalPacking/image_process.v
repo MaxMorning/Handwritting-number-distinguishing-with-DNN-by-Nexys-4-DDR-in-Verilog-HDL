@@ -1,6 +1,7 @@
 module image_process(
     input [32 *32 - 1:0] in_image,
 
+    output [32 * 32 - 1:0] show_image,
     output [32 * 32 - 1:0] out_image
 );
 
@@ -17,6 +18,7 @@ module image_process(
                                         | in_image[(i + 34) % 1024] 
                                         | in_image[(i + 64) % 1024]
                                         | in_image[(i + 65) % 1024];
+            assign show_image[i] = out_image[1023 - i];
         end
     endgenerate
 endmodule
