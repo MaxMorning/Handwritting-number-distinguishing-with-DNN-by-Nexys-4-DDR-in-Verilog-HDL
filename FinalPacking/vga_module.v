@@ -72,9 +72,11 @@ module vga_module(
         .done_sig(done_sig)
     );
 
+    wire hMax = (hCnt == C_H_LINE_PERIOD) ? 1'b1 : 1'b0;
+    wire vMax = (vCnt == C_V_FRAME_PERIOD) ? 1'b1 : 1'b0;
     // Hori
     always @ (posedge clkVga or negedge iRstN) begin
-        if (!iRstN || hCnt == C_H_LINE_PERIOD - 1)
+        if (!iRstN || hMax)
             hCnt <= 11'd0;
         else
             hCnt <= hCnt + 1;
@@ -84,11 +86,13 @@ module vga_module(
 
 
     //Vert
-    always @ (posedge oHs or negedge iRstN) begin
-        if (!iRstN || vCnt == C_V_FRAME_PERIOD - 1)
+    always @ (posedge clkVga or negedge iRstN) begin
+        if (!iRstN || hMax) begin
+            if (!iRstN || vMax)
             vCnt <= 11'd0;
         else
             vCnt <= vCnt + 1;
+        end
     end
 
     assign oVs = (vCnt < C_V_SYNC_PULSE) ? 1'b0 : 1'b1;
