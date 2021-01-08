@@ -44,6 +44,7 @@ module full_connect1(
     always @ (posedge clk) begin
         if (!ena) begin
             done = 0;
+            status = 4'b1010;
             addr_to_rom = {11{1'bz}};
             data_to_exp = {128{1'bz}};
             opr1_to_MultAdder = {(128 * bit){1'bz}};

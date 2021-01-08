@@ -10,6 +10,12 @@ image = tf.image.resize(image_tensor, [32, 32]).numpy()
 image = image[:, :, 0]
 image = image / 255.0
 image = (image > 0.5) * 1.0
+
+for r in range(32):
+    for c in range(32):
+        print(int(image[r][c]), end='')
+    print()
+
 image = npy.reshape(image, [1, 1024])
 
 fc1_b = npy.load('dense_bias_0.npy')

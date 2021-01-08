@@ -1,8 +1,8 @@
 module vga_module(
     input iBusClk, // Bus Clock
-    input mouseClk, // mouse clk, 5MHz?
-    input clkVga, // VGA clock, 40MHz
     input iRstN, // Async reset signal
+    input wire mouseClk, // mouse clk , 5MHz
+    input wire clkVga, // VGA clock, 40MHz
     inout ps2clk, // ps2 Clock Bus
     inout ps2data, // ps2 Data Bus
     output reg [3:0] oRed, // red signal
@@ -10,7 +10,7 @@ module vga_module(
     output reg [3:0] oBlue, // blue signal
     output oHs, // Hori sync
     output oVs, // Vert sync
-    output reg [32 * 32 - 1:0] image
+    output reg [32 * 32 - 1:0] image 
 );
 
     // 800 * 600
@@ -29,7 +29,6 @@ module vga_module(
     reg [10:0] hCnt; // Hori Counter
     reg [10:0] vCnt; // Vert Counter
     wire isActive;
-    
     
     reg [16:0] cursor_x = 0;
     reg [16:0] cursor_y = 0;
@@ -59,8 +58,6 @@ module vga_module(
         end
     end
         
-    // assign oX = cursor_x[16:9];
-    // assign oY = cursor_y[16:9];
     mouse mouse_inst(
         .clk(mouseClk),
         .reset(iRstN),
@@ -72,11 +69,9 @@ module vga_module(
         .done_sig(done_sig)
     );
 
-    wire hMax = (hCnt == C_H_LINE_PERIOD) ? 1'b1 : 1'b0;
-    wire vMax = (vCnt == C_V_FRAME_PERIOD) ? 1'b1 : 1'b0;
     // Hori
     always @ (posedge clkVga or negedge iRstN) begin
-        if (!iRstN || hMax)
+        if (!iRstN || hCnt == C_H_LINE_PERIOD - 1)
             hCnt <= 11'd0;
         else
             hCnt <= hCnt + 1;
@@ -86,13 +81,11 @@ module vga_module(
 
 
     //Vert
-    always @ (posedge clkVga or negedge iRstN) begin
-        if (!iRstN || hMax) begin
-            if (!iRstN || vMax)
-                vCnt <= 11'd0;
-            else
-                vCnt <= vCnt + 1;
-        end
+    always @ (posedge oHs or negedge iRstN) begin
+        if (!iRstN || vCnt == C_V_FRAME_PERIOD - 1)
+            vCnt <= 11'd0;
+        else
+            vCnt <= vCnt + 1;
     end
 
     assign oVs = (vCnt < C_V_SYNC_PULSE) ? 1'b0 : 1'b1;
@@ -114,11 +107,12 @@ module vga_module(
             oRed <= 4'b0000;
             oGreen <= 4'b0000;
             oBlue <= 4'b0000;
+            // image <= 1024'd0;
             for (rowCnt = 0;rowCnt < 1024; rowCnt = rowCnt + 1)
                 image[rowCnt] = 0;
         end
         else if (isActive) begin
-            if (hPos <= cursor_x[16:8] + 8 && hPos >= cursor_x[16:8] && vPos <= cursor_y[16:8] + 16 && vPos >= cursor_y[16:8]) begin
+            if (hPos <= cursor_x[16:8] + 16 && hPos >= cursor_x[16:8] && vPos <= cursor_y[16:8] + 16 && vPos >= cursor_y[16:8]) begin
                 if (button[2]) begin 
                     oRed <= 4'b0000;
                     oBlue <= 4'b0000;
@@ -138,47 +132,27 @@ module vga_module(
             else begin
 //                index = {hPos[10:6], vPos[10:6]};
 //                if (image[index] == 1) begin
-                if (hPos < 512 && vPos < 512) begin
-                    if (image[{hPos[8:4], vPos[8:4]}] == 1) begin
-                        oRed <= 4'b1111;
-                        oGreen <= 4'b0000;
-                        oBlue <= 4'b1111;
-                    end
-                    else begin 
-                        oRed <= 4'b1000;
-                        oGreen <= 4'b1000;
-                        oBlue <= 4'b1000;
-                    end
+                if (hPos < 512 && vPos < 512 && image[{hPos[8:4], vPos[8:4]}] == 1) begin
+                    oRed <= 4'b1111;
+                    oGreen <= 4'b0000;
+                    oBlue <= 4'b1111;
+                end
+                else if (hPos < 512 && vPos < 512) begin 
+                    oRed <= 4'b1111;
+                    oGreen <= 4'b1111;
+                    oBlue <= 4'b1111;
+                end
+                else begin 
+                    oRed <= 4'b0011;
+                    oGreen <= 4'b0011;
+                    oBlue <= 4'b1111;
                 end
                 
             end
             
-//            if (button[1]) begin
-//                if (!image[{cursor_x[16:12], cursor_y[16:12]}])
-//                    image[{cursor_x[16:12], cursor_y[16:12]}] = 1;
-//                if (!image[{cursor_x[16:12], cursor_y[16:12]} + 32])
-//                    image[{cursor_x[16:12], cursor_y[16:12]} + 32] = 1;
-//                if (!image[{cursor_x[16:12], cursor_y[16:12]} - 32])
-//                    image[{cursor_x[16:12], cursor_y[16:12]} - 32] = 1;
-//                if (!image[{cursor_x[16:12], cursor_y[16:12] + 1}])
-//                    image[{cursor_x[16:12], cursor_y[16:12] + 1}] = 1;
-//                if (!image[{cursor_x[16:12], cursor_y[16:12] - 1}])
-//                    image[{cursor_x[16:12], cursor_y[16:12] - 1}] = 1;
-//            end
             if (button[1] && !image[{cursor_x[16:12], cursor_y[16:12]}]) begin
-                image[{cursor_x[16:12], cursor_y[16:12]}] <= 1;
-                image[{(cursor_x[16:12] + 5'b00001), cursor_y[16:12]}] <= 1;
-                image[{(cursor_x[16:12] - 5'b00001), cursor_y[16:12]}] <= 1;
-                image[{cursor_x[16:12], cursor_y[16:12] + 1}] <= 1;
-                image[{cursor_x[16:12], cursor_y[16:12] - 1}] <= 1;
+                image[{cursor_x[16:12], cursor_y[16:12]}] = 1;
             end
-            else
-                but_stat[2] <= 1; // do something
-            // if (!image[{cursor_x[16:12], cursor_y[16:12]} + 32])
-            //     image[{cursor_x[16:12], cursor_y[16:12]} + 32] = 1;
-            // if (!image[{cursor_x[16:12], cursor_y[16:12]} - 32])
-            //     image[{cursor_x[16:12], cursor_y[16:12]} - 32] = 1;
-            
 //            else if (button[0] && image[{cursor_x[16:12], cursor_y[16:12]}])
 //                image[{cursor_x[16:12], cursor_y[16:12]}] = 0;
         end

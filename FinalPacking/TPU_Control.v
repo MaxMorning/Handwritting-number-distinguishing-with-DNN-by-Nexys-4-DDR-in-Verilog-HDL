@@ -96,19 +96,15 @@ module TPU_Control(
         .data_out(data_MultAdder_control)
     );
 
-    always @ (posedge clk) begin
-        if (!ena) begin
-            num_out = 4'bzzzz;
-            done = 1'bz;
-        end
-        else if (!iRst_n) begin
+    always @ (posedge clk or negedge iRst_n) begin
+        if (!iRst_n || !ena) begin
             status = 0;
             num_out = 4'b0; // calculating
             done = 0;
             FC1_ena = 0;
             FC2_ena = 0;
-            FC1_rstn = 1;
-            FC2_rstn = 1;
+            FC1_rstn = 0;
+            FC2_rstn = 0;
         end
         else begin
             case (status)
@@ -116,7 +112,7 @@ module TPU_Control(
                     begin
                         status = 3'b101;
                         FC1_ena = 1;
-                        FC1_rstn = 0;
+                        // FC1_rstn = 0;
                     end
                 3'b101: // FC1 rst done
                     begin
@@ -128,6 +124,7 @@ module TPU_Control(
                         if (FC1_done) begin
                             status = 3'b010;
                             FC1_ena = 0;
+                            FC1_rstn = 0;
                         end
                         else
                             status = 3'b001;
@@ -148,6 +145,7 @@ module TPU_Control(
                         if (FC2_done) begin
                             status = 3'b100;
                             FC2_ena = 0;
+                            FC2_rstn = 0;
                             num_out = data_output;
                         end
                         else

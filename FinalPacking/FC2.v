@@ -35,6 +35,7 @@ module full_connect2(
     always @ (posedge clk) begin
         if (!ena) begin
             done = 0;
+            status = 4'b1010;
             addr_to_rom = {11{1'bz}};
             opr1_to_MultAdder = {(128 * bit){1'bz}};
             opr2_to_MultAdder = {(128 * bit){1'bz}};
@@ -44,6 +45,7 @@ module full_connect2(
             rowCnt = 0;
             status = 4'b1010;
             sum = 0;
+            // data_to_ram = 0;
         end
         else begin
             case (status)
