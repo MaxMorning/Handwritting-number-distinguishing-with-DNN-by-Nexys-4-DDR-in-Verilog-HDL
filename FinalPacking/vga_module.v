@@ -89,9 +89,9 @@ module vga_module(
     always @ (posedge clkVga or negedge iRstN) begin
         if (!iRstN || hMax) begin
             if (!iRstN || vMax)
-            vCnt <= 11'd0;
-        else
-            vCnt <= vCnt + 1;
+                vCnt <= 11'd0;
+            else
+                vCnt <= vCnt + 1;
         end
     end
 
