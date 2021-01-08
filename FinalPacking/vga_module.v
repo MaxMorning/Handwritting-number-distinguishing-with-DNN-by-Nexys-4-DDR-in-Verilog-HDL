@@ -139,7 +139,7 @@ module vga_module(
             else begin
 //                index = {hPos[10:6], vPos[10:6]};
 //                if (image[index] == 1) begin
-                if (hPos < 512 && vPos < 512 && show_image[{hPos[8:4], vPos[8:4]}] == 1) begin
+                if (hPos < 512 && vPos < 512 && show_image[{vPos[8:4], hPos[8:4]}] == 1) begin
                     oRed <= 4'b1111;
                     oGreen <= 4'b0000;
                     oBlue <= 4'b1111;
@@ -157,8 +157,8 @@ module vga_module(
                 
             end
             
-            if (button[1] && !ori_image[{cursor_x[16:12], cursor_y[16:12]}]) begin
-                ori_image[{cursor_x[16:12], cursor_y[16:12]}] = 1;
+            if (button[1] && !ori_image[{cursor_y[16:12], cursor_x[16:12]}]) begin
+                ori_image[{cursor_y[16:12], cursor_x[16:12]}] = 1;
             end
 //            else if (button[0] && image[{cursor_x[16:12], cursor_y[16:12]}])
 //                image[{cursor_x[16:12], cursor_y[16:12]}] = 0;
