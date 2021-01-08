@@ -98,19 +98,20 @@ module total_control(
                 3'b010: // draw
                     begin
                         if (confirm) begin
-                            status <= 3'b110;
+                            status <= 3'b011;
                             TPU_ena = 1;
                             TPU_rstn = 0;
                         end
                         else
                             status <= 3'b010;
                     end
+                3'b011: // wait for TPU initial
+                    status <= 3'b110; 
                 3'b110: // TPU initial done
                     begin
                         status <= 3'b100;
                         TPU_rstn <= 1;
                     end
-                // 3'b011: // TPU Calc
 
                 3'b100: // TPU Calculating , waiting
                     begin
