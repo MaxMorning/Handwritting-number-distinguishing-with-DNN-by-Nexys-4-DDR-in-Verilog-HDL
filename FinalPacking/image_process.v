@@ -18,18 +18,20 @@ module image_process(
                 assign out_image[1023 - 992] = in_image[992] | in_image[993] | in_image[960];
             else if (i < 31) // top side
                 assign out_image[1023 - i] = in_image[i] | in_image[i - 1] | in_image[i + 1] | in_image[i + 32];
+            else if (i > 992) // down side
+                assign out_image[1023 - i] = in_image[i] | in_image[i - 1] | in_image[i + 1] | in_image[i - 32];
             else if (i % 32 == 0) // left side
                 assign out_image[1023 - i] = in_image[i] | in_image[i + 1] | in_image[i - 32] | in_image[i + 32];
             else if (i % 32 == 31) // right side
                 assign out_image[1023 - i] = in_image[i] | in_image[i - 1] | in_image[i - 32] | in_image[i + 32];
-            else if (i > 992) // down side
-                assign out_image[1023 - i] = in_image[i] | in_image[i - 1] | in_image[i + 1] | in_image[i - 32];
             else // others
                 assign out_image[1023 - i] = in_image[i] 
                                             | in_image[(i - 1 + 1024) % 1024] 
                                             | in_image[(i - 32 + 1024) % 1024] 
                                             | in_image[(i + 1) % 1024] 
                                             | in_image[(i + 32) % 1024];
+        end
+        for (i = 0; i < 1024; i = i + 1) begin : PROCESS2
             assign show_image[i] = out_image[1023 - i];
         end
     endgenerate
