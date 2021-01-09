@@ -21,37 +21,37 @@ module TPU_Control(
 
     assign addr_control_rom = FC1_ena ? addr_fc1_rom : FC2_ena ? addr_fc2_rom : FC3_ena ? addr_fc3_rom : {11{1'bz}};
 
-    wire [(128 * bit - 1):0] data_rom_control;
-    wire [(128 * bit - 1):0] data_rom_fc1;
-    wire [(128 * bit - 1):0] data_rom_fc2;
-    wire [(128 * bit - 1):0] data_rom_fc3;
+    wire [(128 * 16 - 1):0] data_rom_control;
+    wire [(128 * 16 - 1):0] data_rom_fc1;
+    wire [(128 * 16 - 1):0] data_rom_fc2;
+    wire [(128 * 16 - 1):0] data_rom_fc3;
 
-    assign data_rom_fc1 = FC1_ena ? data_rom_control : {(128 * bit){1'bz}};
-    assign data_rom_fc2 = FC2_ena ? data_rom_control : {(128 * bit){1'bz}};
-    assign data_rom_fc3 = FC3_ena ? data_rom_control : {(128 * bit){1'bz}};
+    assign data_rom_fc1 = FC1_ena ? data_rom_control : {(128 * 16){1'bz}};
+    assign data_rom_fc2 = FC2_ena ? data_rom_control : {(128 * 16){1'bz}};
+    assign data_rom_fc3 = FC3_ena ? data_rom_control : {(128 * 16){1'bz}};
     
-    wire [(2 * bit - 2):0] data_MultAdder_control;
-    wire [(2 * bit - 2):0] data_MultAdder_fc1;
-    wire [(2 * bit - 2):0] data_MultAdder_fc2;
-    wire [(2 * bit - 2):0] data_MultAdder_fc3;
+    wire [(2 * 16 - 2):0] data_MultAdder_control;
+    wire [(2 * 16 - 2):0] data_MultAdder_fc1;
+    wire [(2 * 16 - 2):0] data_MultAdder_fc2;
+    wire [(2 * 16 - 2):0] data_MultAdder_fc3;
 
-    assign data_MultAdder_fc1 = FC1_ena ? data_MultAdder_control : {(2 * bit - 1){1'bz}};
-    assign data_MultAdder_fc2 = FC2_ena ? data_MultAdder_control : {(2 * bit - 1){1'bz}};
-    assign data_MultAdder_fc3 = FC3_ena ? data_MultAdder_control : {(2 * bit - 1){1'bz}};
+    assign data_MultAdder_fc1 = FC1_ena ? data_MultAdder_control : {(2 * 16 - 1){1'bz}};
+    assign data_MultAdder_fc2 = FC2_ena ? data_MultAdder_control : {(2 * 16 - 1){1'bz}};
+    assign data_MultAdder_fc3 = FC3_ena ? data_MultAdder_control : {(2 * 16 - 1){1'bz}};
 
-    wire [128 * bit - 1:0] opr1_control_MultAdder;
-    wire [128 * bit - 1:0] opr1_fc1_MultAdder;
-    wire [128 * bit - 1:0] opr1_fc2_MultAdder;
-    wire [128 * bit - 1:0] opr1_fc3_MultAdder;
+    wire [128 * 16 - 1:0] opr1_control_MultAdder;
+    wire [128 * 16 - 1:0] opr1_fc1_MultAdder;
+    wire [128 * 16 - 1:0] opr1_fc2_MultAdder;
+    wire [128 * 16 - 1:0] opr1_fc3_MultAdder;
 
-    assign opr1_control_MultAdder = FC1_ena ? opr1_fc1_MultAdder : FC2_ena ? opr1_fc2_MultAdder : FC3_ena ? opr1_fc3_MultAdder : {(128 * bit){1'bz}};
+    assign opr1_control_MultAdder = FC1_ena ? opr1_fc1_MultAdder : FC2_ena ? opr1_fc2_MultAdder : FC3_ena ? opr1_fc3_MultAdder : {(128 * 16){1'bz}};
     
-    wire [128 * bit - 1:0] opr2_control_MultAdder;
-    wire [128 * bit - 1:0] opr2_fc1_MultAdder;
-    wire [128 * bit - 1:0] opr2_fc2_MultAdder;
-    wire [128 * bit - 1:0] opr2_fc3_MultAdder;
+    wire [128 * 16 - 1:0] opr2_control_MultAdder;
+    wire [128 * 16 - 1:0] opr2_fc1_MultAdder;
+    wire [128 * 16 - 1:0] opr2_fc2_MultAdder;
+    wire [128 * 16 - 1:0] opr2_fc3_MultAdder;
 
-    assign opr2_control_MultAdder = FC1_ena ? opr2_fc1_MultAdder : FC2_ena ? opr2_fc2_MultAdder : FC3_ena ? opr2_fc3_MultAdder : {(128 * bit){1'bz}};
+    assign opr2_control_MultAdder = FC1_ena ? opr2_fc1_MultAdder : FC2_ena ? opr2_fc2_MultAdder : FC3_ena ? opr2_fc3_MultAdder : {(128 * 16){1'bz}};
 
     block_mem mem(
         .clka(clk),
@@ -60,7 +60,7 @@ module TPU_Control(
         .douta(data_rom_control)
     );
 
-    wire [128 * bit - 1:0] data_fc1_fc2;
+    wire [128 * 16 - 1:0] data_fc1_fc2;
     full_connect1 fc1(
         .ena(FC1_ena),
         .clk(clk),
@@ -76,7 +76,7 @@ module TPU_Control(
         .data_to_ram(data_fc1_fc2)
     );
 
-    wire [128 * bit - 1:0] data_fc2_fc3;
+    wire [128 * 16 - 1:0] data_fc2_fc3;
     
     full_connect2 fc2(
         .ena(FC2_ena),
@@ -93,7 +93,7 @@ module TPU_Control(
         .data_to_ram(data_fc2_fc3)
     );
 
-    wire [10 * bit - 1:0] data_fc3_10max;
+    wire [10 * 16 - 1:0] data_fc3_10max;
 
     full_connect3 fc3(
         .ena(FC3_ena),

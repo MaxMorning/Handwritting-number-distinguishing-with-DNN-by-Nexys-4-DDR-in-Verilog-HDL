@@ -2,23 +2,23 @@ module full_connect1(
     input ena,
     input clk,
     input iRst_n,
-    input [128 * bit - 1:0] data_from_rom,
+    input [128 * 16 - 1:0] data_from_rom,
     input [32 * 32 - 1:0] data_from_ram, // 1 bit
-    input [(2 * bit - 2):0] data_from_MultAdder,
+    input [(2 * 16 - 2):0] data_from_MultAdder,
     
     output reg done,
     output reg [10:0] addr_to_rom,
-    output reg [128 * bit - 1:0] opr1_to_MultAdder,
-    output reg [128 * bit - 1:0] opr2_to_MultAdder,
-    output reg [128 * bit - 1:0] data_to_ram
+    output reg [128 * 16 - 1:0] opr1_to_MultAdder,
+    output reg [128 * 16 - 1:0] opr2_to_MultAdder,
+    output reg [128 * 16 - 1:0] data_to_ram
 );
 
     reg [127:0] data_to_exp;
-    wire [128 * bit - 1:0] data_from_exp;
+    wire [128 * 16 - 1:0] data_from_exp;
     genvar i;
     generate
         for (i = 0; i < 128; i = i + 1) begin : GEN
-            assign data_from_exp[i * bit + (bit - 1) -: bit] = {5'b00000, data_to_exp[i], {(bit - 6){1'b0}}};
+            assign data_from_exp[i * 16 + (16 - 1) -: 16] = {5'b00000, data_to_exp[i], {(16 - 6){1'b0}}};
         end
     endgenerate
     parameter   rom_addr_base = 11'h000,
@@ -26,14 +26,14 @@ module full_connect1(
 
     reg [3:0] colCnt;
     reg [7:0] rowCnt;
-    reg [128 * bit - 1:0] biases;
+    reg [128 * 16 - 1:0] biases;
     reg [3:0] status;
-    reg signed [(2 * bit - 2):0] sum;
+    reg signed [(2 * 16 - 2):0] sum;
 
-    reg signed [(2 * bit - 2):0] adder_opr1;
-    reg signed [(2 * bit - 2):0] adder_opr2;
+    reg signed [(2 * 16 - 2):0] adder_opr1;
+    reg signed [(2 * 16 - 2):0] adder_opr2;
 
-    wire signed [(2 * bit - 2):0] adder_sum;
+    wire signed [(2 * 16 - 2):0] adder_sum;
     Float16Adder adder(
         .iNum1(adder_opr1),
         .iNum2(adder_opr2),
@@ -47,8 +47,8 @@ module full_connect1(
             status = 4'b1010;
             addr_to_rom = {11{1'bz}};
             data_to_exp = {128{1'bz}};
-            opr1_to_MultAdder = {(128 * bit){1'bz}};
-            opr2_to_MultAdder = {(128 * bit){1'bz}};
+            opr1_to_MultAdder = {(128 * 16){1'bz}};
+            opr2_to_MultAdder = {(128 * 16){1'bz}};
         end
         else if (!iRst_n) begin
             done = 0;
@@ -122,12 +122,12 @@ module full_connect1(
                     begin
                         status = 4'b0110;
                         adder_opr1 = sum;
-                        adder_opr2 = {{5{biases[bit * rowCnt + (bit - 1)]}}, biases[bit * rowCnt + (bit - 1) -: bit], 10'b0000000000};
+                        adder_opr2 = {{5{biases[16 * rowCnt + (16 - 1)]}}, biases[16 * rowCnt + (16 - 1) -: 16], 10'b0000000000};
                     end
                 4'b0110 : // get sum += bias
                     begin
                         status = 4'b0111;
-                        data_to_ram[bit * rowCnt + (bit - 1) -: bit] = (adder_sum[(2 * bit - 2)] == 0) ? {adder_sum[(2 * bit - 2)], adder_sum[(2 * bit - 8) -:(bit - 1)]} : {bit{1'b0}}; // relu
+                        data_to_ram[16 * rowCnt + (16 - 1) -: 16] = (adder_sum[(2 * 16 - 2)] == 0) ? {adder_sum[(2 * 16 - 2)], adder_sum[(2 * 16 - 8) -:(16 - 1)]} : {16{1'b0}}; // relu
                         rowCnt = rowCnt + 1;
                     end
                 4'b0111 : // r < 128 ?

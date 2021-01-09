@@ -2,29 +2,29 @@ module full_connect3(
     input ena,
     input clk,
     input iRst_n,
-    input [128 * bit - 1:0] data_from_rom,
-    input [128 * bit - 1:0] data_from_ram,
-    input [(2 * bit - 2):0] data_from_MultAdder,
+    input [128 * 16 - 1:0] data_from_rom,
+    input [128 * 16 - 1:0] data_from_ram,
+    input [(2 * 16 - 2):0] data_from_MultAdder,
     
     output reg done,
     output reg [10:0] addr_to_rom,
-    output reg [128 * bit - 1:0] opr1_to_MultAdder,
-    output reg [128 * bit - 1:0] opr2_to_MultAdder,
-    output reg [10 * bit - 1:0] data_to_ram
+    output reg [128 * 16 - 1:0] opr1_to_MultAdder,
+    output reg [128 * 16 - 1:0] opr2_to_MultAdder,
+    output reg [10 * 16 - 1:0] data_to_ram
 );
 
     parameter   rom_addr_base = 11'h482,
                 bias_addr_base = 11'h48c;
 
     reg [3:0] rowCnt;
-    reg [128 * bit - 1:0] biases;
+    reg [128 * 16 - 1:0] biases;
     reg [3:0] status;
-    reg signed [(2 * bit - 2):0] sum;
+    reg signed [(2 * 16 - 2):0] sum;
 
-    reg signed [(2 * bit - 2):0] adder_opr1;
-    reg signed [(2 * bit - 2):0] adder_opr2;
+    reg signed [(2 * 16 - 2):0] adder_opr1;
+    reg signed [(2 * 16 - 2):0] adder_opr2;
 
-    wire signed [(2 * bit - 2):0] adder_sum;
+    wire signed [(2 * 16 - 2):0] adder_sum;
     Float16Adder adder(
         .iNum1(adder_opr1),
         .iNum2(adder_opr2),
@@ -37,8 +37,8 @@ module full_connect3(
             done = 0;
             status = 4'b1010;
             addr_to_rom = {11{1'bz}};
-            opr1_to_MultAdder = {(128 * bit){1'bz}};
-            opr2_to_MultAdder = {(128 * bit){1'bz}};
+            opr1_to_MultAdder = {(128 * 16){1'bz}};
+            opr2_to_MultAdder = {(128 * 16){1'bz}};
         end
         else if (!iRst_n) begin
             done = 0;
@@ -90,13 +90,13 @@ module full_connect3(
                 4'b0010: // get wa ; calc wa + b
                     begin
                         status = 4'b0011;
-                        adder_opr1 = {{5{biases[bit * (rowCnt + 118) + (bit - 1)]}}, biases[bit * (rowCnt + 118) + (bit - 1) -: bit], 10'b0000000000};
+                        adder_opr1 = {{5{biases[16 * (rowCnt + 118) + (16 - 1)]}}, biases[16 * (rowCnt + 118) + (16 - 1) -: 16], 10'b0000000000};
                         adder_opr2 = data_from_MultAdder;
                     end
                 4'b0011: // get wa + b ; ++r
                     begin
                         status = 4'b0100;
-                        data_to_ram[bit * rowCnt + (bit - 1) -: bit] = {adder_sum[(2 * bit - 2)], adder_sum[(2 * bit - 8) -:(bit - 1)]};
+                        data_to_ram[16 * rowCnt + (16 - 1) -: 16] = {adder_sum[(2 * 16 - 2)], adder_sum[(2 * 16 - 8) -:(16 - 1)]};
                         rowCnt = rowCnt + 1;
                         sum = 0;
                     end
