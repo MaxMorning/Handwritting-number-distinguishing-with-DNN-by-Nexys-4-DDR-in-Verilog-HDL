@@ -49,8 +49,8 @@ module vga_module(
     wire [16:0] y_next;
     wire [2:0] b_next;
     
-    assign x_next = (~done_sig) ? cursor_x : (mouse_x[7] == 0 ? cursor_x + mouse_x[7:0] : cursor_x - ~{9'b111111111, mouse_x[7:0]} - 1);
-    assign y_next = (~done_sig) ? cursor_y : (mouse_y[7] == 0 ? cursor_y - mouse_y[7:0] : cursor_y + ~{9'b111111111, mouse_y[7:0]} + 1);
+    assign x_next = (~done_sig) ? cursor_x : (mouse_x[7] == 0 ? (cursor_x[16:8] > 510 ? cursor_x : cursor_x + mouse_x[7:0]) : (cursor_x[16:8] < 2 ? cursor_x : cursor_x - ~{9'b111111111, mouse_x[7:0]} - 1));
+    assign y_next = (~done_sig) ? cursor_y : (mouse_y[7] == 0 ? (cursor_y[16:8] < 2 ? cursor_y : cursor_y - mouse_y[7:0]) : (cursor_y[16:8] > 510 ? cursor_y : cursor_y + ~{9'b111111111, mouse_y[7:0]} + 1));
     assign b_next = (~done_sig) ? 3'b000 : but_stat;
     always @ ( negedge iBusClk ) begin
         if (!iRstN) begin
@@ -119,7 +119,7 @@ module vga_module(
                 ori_image[rowCnt] = 0;
         end
         else if (isActive) begin
-            if (hPos <= cursor_x[16:8] + 16 && hPos >= cursor_x[16:8] && vPos <= cursor_y[16:8] + 16 && vPos >= cursor_y[16:8]) begin
+            if (hPos <= cursor_x[16:8] + 8 && hPos + 8 >= cursor_x[16:8] && vPos <= cursor_y[16:8] + 8 && vPos + 8 >= cursor_y[16:8]) begin
                 if (button[2]) begin 
                     oRed <= 4'b0000;
                     oBlue <= 4'b0000;
