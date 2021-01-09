@@ -11,7 +11,7 @@ bit float
 ### (bit)'b1000000000000000 means 1
 ## Data Addr
 
-block memory (128 * bit)b * 1036
+block memory (128 * bit)b * 1165
 
 0x000 Layer1 w0 0
 
@@ -39,6 +39,14 @@ block memory (128 * bit)b * 1036
 
 ...
 
-0x40A Layer2 w9
+0x480 Layer2 w127
 
-0x40B Layer2 b
+0x481 Layer2 b
+
+0x482 Layer3 w0
+
+...
+
+0x48b Layer3 w9
+
+0x48c Layer3 b

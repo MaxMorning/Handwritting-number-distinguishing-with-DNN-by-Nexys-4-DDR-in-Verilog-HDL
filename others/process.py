@@ -31,6 +31,7 @@ def convert(num):
 file = open('16bit.coe', 'w')
 file_str = "memory_initialization_radix=16;\nmemory_initialization_vector=\n"
 
+# fc1 params
 fc1_w = npy.load('dense_kernel_0.npy')
 for r in range(128):
     cnt_128 = 0
@@ -50,8 +51,9 @@ for i in range(128):
     unit_128_8 += convert(fc1_b[i])
 file_str += unit_128_8 + ',\n'
 
+# fc2 params
 fc2_w = npy.load('dense_1_kernel_0.npy')
-for r in range(10):
+for r in range(128):
     unit_128_8 = ''
     for c in range(128):
         unit_128_8 += convert(fc2_w[c][r])
@@ -61,8 +63,23 @@ for r in range(10):
 fc2_b = npy.load('dense_1_bias_0.npy')
 unit_128_8 = ''
 for i in range(128):
+    unit_128_8 += convert(fc2_b[i])
+file_str += unit_128_8 + ',\n'
+
+# fc3 params
+fc3_w = npy.load('dense_2_kernel_0.npy')
+for r in range(10):
+    unit_128_8 = ''
+    for c in range(128):
+        unit_128_8 += convert(fc3_w[c][r])
+    unit_128_8 += ',\n'
+    file_str += unit_128_8
+
+fc3_b = npy.load('dense_2_bias_0.npy')
+unit_128_8 = ''
+for i in range(128):
     if i < 10:
-        unit_128_8 += convert(fc2_b[i])
+        unit_128_8 += convert(fc3_b[i])
     else:
         unit_128_8 += '0000'
 file_str += unit_128_8 + ';'

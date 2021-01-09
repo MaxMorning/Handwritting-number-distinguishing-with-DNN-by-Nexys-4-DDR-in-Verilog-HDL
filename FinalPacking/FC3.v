@@ -1,4 +1,4 @@
-module full_connect2(
+module full_connect3(
     input ena,
     input clk,
     input iRst_n,
@@ -10,13 +10,13 @@ module full_connect2(
     output reg [10:0] addr_to_rom,
     output reg [128 * bit - 1:0] opr1_to_MultAdder,
     output reg [128 * bit - 1:0] opr2_to_MultAdder,
-    output reg [128 * bit - 1:0] data_to_ram
+    output reg [10 * bit - 1:0] data_to_ram
 );
 
-    parameter   rom_addr_base = 11'h401,
-                bias_addr_base = 11'h481;
+    parameter   rom_addr_base = 11'h482,
+                bias_addr_base = 11'h48c;
 
-    reg [7:0] rowCnt;
+    reg [3:0] rowCnt;
     reg [128 * bit - 1:0] biases;
     reg [3:0] status;
     reg signed [(2 * bit - 2):0] sum;
@@ -73,7 +73,7 @@ module full_connect2(
                 4'b0000: // ask w,a
                     begin
                         status = 4'b1101;
-                        addr_to_rom = rom_addr_base + (127 - rowCnt);
+                        addr_to_rom = rom_addr_base + (9 - rowCnt);
                     end
                 4'b1101: // wait for w
                     status = 4'b0001;
@@ -90,7 +90,7 @@ module full_connect2(
                 4'b0010: // get wa ; calc wa + b
                     begin
                         status = 4'b0011;
-                        adder_opr1 = {{5{biases[bit * rowCnt + (bit - 1)]}}, biases[bit * rowCnt + (bit - 1) -: bit], 10'b0000000000};
+                        adder_opr1 = {{5{biases[bit * (rowCnt + 118) + (bit - 1)]}}, biases[bit * (rowCnt + 118) + (bit - 1) -: bit], 10'b0000000000};
                         adder_opr2 = data_from_MultAdder;
                     end
                 4'b0011: // get wa + b ; ++r
@@ -102,7 +102,7 @@ module full_connect2(
                     end
                 4'b0100: // r < 10 ?
                     begin
-                        if (rowCnt < 128)
+                        if (rowCnt < 10)
                             status = 4'b0000;
                         else
                             status = 4'b0101;
