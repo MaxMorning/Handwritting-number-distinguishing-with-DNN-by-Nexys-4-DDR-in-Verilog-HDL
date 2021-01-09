@@ -1,358 +1,335 @@
 module ps2_rx(
-	input wire clk, reset,
-	input wire ps2d, //ps2 data
-	input wire ps2c, //ps2 clk
-	input wire rx_en,
+    input clk,
+    input reset,
+    input ps2data,
+    input ps2clk,
+    input rx_en,
 
-	output reg rx_done_sig,
-	output wire [7:0] d_rec
+    output reg rx_done_sig,
+    output [7:0] data_rec
 );
 
-	reg [7:0] filter_reg;
-	wire [7:0] filter_next;
-	reg  ps2count_reg;
-	wire ps2count_next;
+    reg [7:0] filter_reg;
+    wire [7:0] filter_next;
+    reg  ps2count_reg;
+    wire ps2count_next;
 
-	wire fall_edge;
+    wire fall_edge;
 
-	always @(posedge clk)
-		if (!reset) begin
-			filter_reg <= 0;
-			ps2count_reg <= 0;
-		end
-		else begin
-			filter_reg <= filter_next;
-			ps2count_reg <= ps2count_next;
-		end
+    always @(posedge clk)
+        if (!reset) begin
+            filter_reg <= 0;
+            ps2count_reg <= 0;
+        end
+        else begin
+            filter_reg <= filter_next;
+            ps2count_reg <= ps2count_next;
+        end
 
-	assign filter_next = {ps2c, filter_reg[7:1]};
-	assign ps2count_next = (filter_reg==8'b11111111) ? 1'b1 :(filter_reg==8'b00000000) ? 1'b0 :ps2count_reg;
-	assign fall_edge = ps2count_reg & ~ps2count_next;
-	localparam [1:0] idle = 2'b00,
-				receive = 2'b01,
-				done = 2'b10;
+    assign filter_next = {ps2clk, filter_reg[7:1]};
+    assign ps2count_next = (filter_reg == 8'b11111111) ? 1'b1 : (filter_reg == 8'b00000000) ? 1'b0 : ps2count_reg;
+    assign fall_edge = ps2count_reg & ~ps2count_next;
  
-	reg [1:0] state_reg, state_next;
-	reg [3:0]  num_reg, num_next;
-	reg [10:0] data_reg, data_next;
+    reg [1:0] state_reg, state_next;
+    reg [3:0]  num_reg, num_next;
+    reg [10:0] data_reg, data_next;
 
-	always @(posedge clk)
-		if (!reset) begin
-			state_reg <= idle;
-			num_reg <= 0;
-			data_reg <= 0;
-		end
-		else begin
-			state_reg <= state_next;
-			num_reg <= num_next;
-			data_reg <= data_next;
-		end
+    always @(posedge clk)
+        if (!reset) begin
+            state_reg <= 2'b00;
+            num_reg <= 0;
+            data_reg <= 0;
+        end
+        else begin
+            state_reg <= state_next;
+            num_reg <= num_next;
+            data_reg <= data_next;
+        end
 
-	always @  ( * ) begin
-		state_next = state_reg;
-		num_next = num_reg;
-		data_next = data_reg;
+    always @  ( * ) begin
+        state_next = state_reg;
+        num_next = num_reg;
+        data_next = data_reg;
 
-		rx_done_sig = 1'b0;
+        rx_done_sig = 1'b0;
 
-		case (state_reg)
-			idle: 
-				if (fall_edge & rx_en) begin
-					data_next = {ps2d, data_reg[10:1]};
-					num_next = 4'd9;
-					state_next = receive;
-				end
-			receive: // 8 data + 1 odd_parity + 1 stop
-				if (fall_edge) begin
-						data_next = {ps2d, data_reg[10:1]};
-						if (num_reg==0)
-								state_next = done;
-						else
-							num_next = num_reg - 1;
-					end
-			done: begin 
-				state_next = idle;
-				rx_done_sig = 1'b1;
-			end
-		endcase
-	end
-	// output
-	assign d_rec = data_reg[8:1];
+        case (state_reg)
+            2'b00: // idle
+                if (fall_edge & rx_en) begin
+                    data_next = {ps2data, data_reg[10:1]};
+                    num_next = 4'd9;
+                    state_next = 2'b01;
+                end
+            2'b01: //receive , 8 data + 1 odd_parity + 1 stop
+                if (fall_edge) begin
+                        data_next = {ps2data, data_reg[10:1]};
+                        if (num_reg == 0)
+                                state_next = 2'b10;
+                        else
+                            num_next = num_reg - 1;
+                    end
+            2'b10: begin // done
+                state_next = 2'b00;
+                rx_done_sig = 1'b1;
+            end
+        endcase
+    end
+    // output
+    assign data_rec = data_reg[8:1];
 
 endmodule
 
 `timescale 1ns / 1ps
 
 module ps2_tx(
-	input wire clk, reset,
-	input wire send_en,
-	input wire [7:0] d_send,
-	inout wire ps2d, ps2c,
-	output reg rxen_out, tx_done_sig
+    input clk, 
+    input reset,
+    input send_en,
+    input [7:0] data_send,
+    inout ps2data,
+    inout ps2clk,
+    output reg rxen_out,
+    output reg tx_done_sig
 );
-	// symbolic state declaration
-	localparam [2:0] idle = 3'b000,
-					rts = 	3'b001,
-					start = 3'b010,
-					data = 	3'b011,
-					stop = 	3'b100;
-	// signal declaration
-	reg [2:0] state_reg, state_next;
+    reg [2:0] state_reg, state_next;
 
-	reg [3:0] num_reg, num_next;
-	reg [8:0] data_reg, data_next;
-	reg [12:0] count_reg, count_next;
+    reg [3:0] num_reg, num_next;
+    reg [8:0] data_reg, data_next;
+    reg [12:0] count_reg, count_next;
 
-	reg ps2c_out, ps2d_out;
-	reg tri_c, tri_d;
-	wire odd_par;
+    reg ps2clk_out, ps2data_out;
+    reg clk_oena, data_oena;
+    wire odd_par;
 
-	reg H2L_F1;
-	reg H2L_F2;
-	
-	always @ ( posedge clk or negedge reset )
-		if( !reset ) begin
-			H2L_F1 <= 1'b1;
-			H2L_F2 <= 1'b1;
-		end 
-		else begin
-			H2L_F1 <= ps2c;
-			H2L_F2 <= H2L_F1;
-		end
-	
-	/****************************/
-	
-	assign fall_edge = H2L_F2 & !H2L_F1;
+    // key-vibration eliminate ?
+    reg H2L_F1;
+    reg H2L_F2;
 
-	// FSMD state & data registers
-	always @(posedge clk)
-		if (!reset) begin
-			state_reg <= idle;
-			count_reg <= 0;
-			num_reg <= 0;
-			data_reg <= 0;
-		end
-		else begin
-			state_reg <= state_next;
-			count_reg <= count_next;
-			num_reg <= num_next;
-			data_reg <= data_next;
-		end
-	assign odd_par = ~(^d_send);    
+    assign ps2clk = clk_oena ? ps2clk_out : 1'bz;
+    assign ps2data = data_oena ? ps2data_out : 1'bz;
 
-	// FSMD next-state logic
-	always @  ( * ) begin
-		state_next = state_reg;
+    always @ ( posedge clk or negedge reset )
+        if( !reset ) begin
+            H2L_F1 <= 1'b1;
+            H2L_F2 <= 1'b1;
+        end 
+        else begin
+            H2L_F1 <= ps2clk;
+            H2L_F2 <= H2L_F1;
+        end
+    
+    
+    assign fall_edge = H2L_F2 & !H2L_F1;
 
-		count_next = count_reg;
-		num_next = num_reg;
-		data_next = data_reg;
+    always @(posedge clk)
+        if (!reset) begin
+            state_reg <= 3'b000;
+            count_reg <= 0;
+            num_reg <= 0;
+            data_reg <= 0;
+        end
+        else begin
+            state_reg <= state_next;
+            count_reg <= count_next;
+            num_reg <= num_next;
+            data_reg <= data_next;
+        end
+    assign odd_par = ~(^data_send);    
 
-		ps2c_out = 1'b1;
-		ps2d_out = 1'b1;
-		tri_c = 1'b0;
-		tri_d = 1'b0;
+    always @  ( * ) begin
+        state_next = state_reg;
 
-		rxen_out = 1'b0;
-		tx_done_sig = 1'b0;
-		case (state_reg)
-			idle: begin
-				rxen_out = 1'b1;
-				if (send_en) begin
-					data_next = {odd_par, d_send};
-					count_next = 13'h1fff; // 2^13-1 to delay 164us
-					state_next = rts; 
-				end
-			end
-			rts: begin// request to send 
-				ps2c_out = 1'b0;
-				tri_c = 1'b1;
-				count_next = count_reg - 1;
-				if (count_reg==0)
-				state_next = start;
-			end
-			start: begin 
-				ps2d_out = 1'b0;
-				tri_d = 1'b1;
-				if (fall_edge) begin
-					num_next = 4'h8;
-					state_next = data;  
-				end
-			end
-			data: begin// 8 data + 1 odd_parity 
-				ps2d_out = data_reg[0];
-				tri_d = 1'b1;
-				if (fall_edge) begin
-					data_next = {1'b0, data_reg[8:1]};
-					if (num_reg == 0)
-						state_next = stop;
-					else
-						num_next = num_reg - 1;
-				end
-			end
-			stop: // assume floating high for ps2d
-			if (fall_edge) begin
-				state_next = idle;
-				tx_done_sig = 1'b1;
-			end
-		endcase
-	end
-	// tri-state buffers
-	assign ps2c = (tri_c) ? ps2c_out : 1'bz;
-	assign ps2d = (tri_d) ? ps2d_out : 1'bz;
+        count_next = count_reg;
+        num_next = num_reg;
+        data_next = data_reg;
+
+        ps2clk_out = 1'b1;
+        ps2data_out = 1'b1;
+        clk_oena = 1'b0;
+        data_oena = 1'b0;
+
+        rxen_out = 1'b0;
+        tx_done_sig = 1'b0;
+        case (state_reg)
+            3'b000: begin // idle
+                rxen_out = 1'b1;
+                if (send_en) begin
+                    data_next = {odd_par, data_send};
+                    count_next = 13'h1fff; // delay
+                    state_next = 3'b001; 
+                end
+            end
+            3'b001: begin// prepare to send 
+                ps2clk_out = 1'b0;
+                clk_oena = 1'b1;
+                count_next = count_reg - 1;
+                if (count_reg==0)
+                    state_next = 3'b010;
+            end
+            3'b010: begin // start
+                ps2data_out = 1'b0;
+                data_oena = 1'b1;
+                if (fall_edge) begin
+                    num_next = 4'h8;
+                    state_next = 3'b011;  
+                end
+            end
+            3'b011: begin// send data
+                ps2data_out = data_reg[0];
+                data_oena = 1'b1;
+                if (fall_edge) begin
+                    data_next = {1'b0, data_reg[8:1]};
+                    if (num_reg == 0)
+                        state_next = 3'b100;
+                    else
+                        num_next = num_reg - 1;
+                end
+            end
+            3'b100: // stop
+            if (fall_edge) begin
+                state_next = 3'b000;
+                tx_done_sig = 1'b1;
+            end
+        endcase
+    end
+
 endmodule
 
 
 `timescale 1ns / 1ps
 module ps2_rxtx(
-	input wire clk, reset,
-	input wire send_en,
-	inout wire ps2d, ps2c,
-	input wire [7:0] d_send,
+    input clk,
+    input reset,
+    input send_en,
+    inout ps2data,
+    inout ps2clk,
+    input [7:0] data_send,
 
-	output wire rx_done_sig, tx_done_sig,
-	output wire [7:0] d_rec
+    output rx_done_sig,
+    output tx_done_sig,
+    output [7:0] data_rec
 );
-	// signal declaration
-	wire rxen_out;
+    wire rxen_out;
 
-	// body
-	// instantiate ps2 receiver
-	ps2_rx ps2_rx_unit(
-		.clk(clk), 
-		.reset(reset), 
-		.rx_en(rxen_out),
-		.ps2d(ps2d), 
-		.ps2c(ps2c),
-		.rx_done_sig(rx_done_sig), 
-		.d_rec(d_rec)
-	);
-	// instantiate ps2 transmitter
-	ps2_tx ps2_tx_unit(
-		.clk(clk), 
-		.reset(reset), 
-		.send_en(send_en),
-		.d_send(d_send), 
-		.ps2d(ps2d), 
-		.ps2c(ps2c),
-		.rxen_out(rxen_out), 
-		.tx_done_sig(tx_done_sig)
-	);
+    ps2_rx ps2_rx_unit(
+        .clk(clk), 
+        .reset(reset), 
+        .rx_en(rxen_out),
+        .ps2data(ps2data), 
+        .ps2clk(ps2clk),
+        .rx_done_sig(rx_done_sig), 
+        .data_rec(data_rec)
+    );
+    ps2_tx ps2_tx_unit(
+        .clk(clk), 
+        .reset(reset), 
+        .send_en(send_en),
+        .data_send(data_send), 
+        .ps2data(ps2data), 
+        .ps2clk(ps2clk),
+        .rxen_out(rxen_out), 
+        .tx_done_sig(tx_done_sig)
+    );
 
 endmodule
 
 `timescale 1ns / 1ps
 
 module mouse(
-	input wire clk, reset,
-	inout wire ps2d, ps2c,
-	output wire [8:0] xm, ym,
-	output wire [2:0] button,
-	output reg done_sig,
-	output wire send_en_out
+    input clk,
+    input reset,
+    inout ps2data,
+    inout ps2clk,
+    output [8:0] xm,
+    output [8:0] ym,
+    output [2:0] button,
+    output reg done_sig
 );
-	// constant declaration
-	localparam STRM=8'hf4; // stream command F4
-	// symbolic state declaration
-	localparam [2:0]
-	init1 = 3'b000,
-	init2 = 3'b001,
-	init3 = 3'b010,
-	pack1 = 3'b011,
-	pack2 = 3'b100,
-	pack3 = 3'b101,
-	done = 3'b110,
-	pack4 = 3'b111;
-	// signal declaration
-	reg [2:0] state_reg, state_next;
-	wire [7:0] rx_data;
-	reg send_en;//**
-	wire rx_done_sig, tx_done_sig;
-	reg [8:0] x_reg, y_reg, x_next, y_next;
-	reg [2:0] button_reg, button_next;
+    wire send_en_out;
+    reg [2:0] state_reg, state_next;
+    wire [7:0] rx_data;
+    reg send_en;
+    wire rx_done_sig, tx_done_sig;
+    reg [8:0] x_reg, y_reg, x_next, y_next;
+    reg [2:0] button_reg, button_next;
 
-	// body
-	// instantiation
-	ps2_rxtx ps2_unit(
-		.clk(clk), 
-		.reset(reset), 
-		.send_en(send_en_out),
-		.d_send(STRM), 
-		.d_rec(rx_data), 
-		.ps2d(ps2d), 
-		.ps2c(ps2c),
-		.rx_done_sig(rx_done_sig),
-		.tx_done_sig(tx_done_sig)
-	);
-	// body
-	// FSMD state and data registers
-	always @(posedge clk)
-		if (!reset) begin
-			state_reg <= init1;
-			x_reg <= 0;
-			y_reg <= 0;
-			button_reg <= 0;
-		end
-		else begin
-			state_reg <= state_next;
-			x_reg <= x_next;
-			y_reg <= y_next;
-			button_reg <= button_next;
-		end
-	// FSMD next-state logic
-	always @  ( * ) begin
-		state_next = state_reg;
+    assign xm = x_reg;
+    assign ym = y_reg;
+    assign button = button_reg;
+    assign send_en_out = send_en;
 
-		send_en = 1'b0;
-		done_sig = 1'b0;
+    ps2_rxtx ps2_unit(
+        .clk(clk), 
+        .reset(reset), 
+        .send_en(send_en_out),
+        .data_send(8'hf4), 
+        .data_rec(rx_data), 
+        .ps2data(ps2data), 
+        .ps2clk(ps2clk),
+        .rx_done_sig(rx_done_sig),
+        .tx_done_sig(tx_done_sig)
+    );
 
-		x_next = x_reg;
-		y_next = y_reg;
-		button_next = button_reg;
+    always @(posedge clk)
+        if (!reset) begin
+            state_reg <= 3'b000;
+            x_reg <= 0;
+            y_reg <= 0;
+            button_reg <= 0;
+        end
+        else begin
+            state_reg <= state_next;
+            x_reg <= x_next;
+            y_reg <= y_next;
+            button_reg <= button_next;
+        end
 
-		case (state_reg)
-			init1: begin
-				send_en = 1'b1;
-				state_next = init2;
-			end
-			init2: // wait for send to complete
-				if (tx_done_sig)
-					state_next = init3;
-			init3: // wait for acknowledge packet
-				if (rx_done_sig)
-					state_next = pack1;
-			pack1: // wait for 1st data packet
-				if (rx_done_sig) begin
-					state_next = pack2;
-					y_next[8] = rx_data[5];
-					x_next[8] = rx_data[4];
-					button_next = rx_data[2:0];
-					end
-			pack2: // wait for 2nd data packet
-			if (rx_done_sig) begin
-				state_next = pack3;
-				x_next[7:0] = rx_data;
-			end
-			pack3: // wait for 3rd data packet
-			if (rx_done_sig) begin
-				state_next = pack4;
-				y_next[7:0] = rx_data;
-				end
-		    pack4:
-		    if (rx_done_sig) begin
-		        state_next = done;
-		    end
-			done: begin
-				done_sig = 1'b1;
-				state_next = pack1;
-			end
-		endcase
-	end
+    always @  ( * ) begin
+        state_next = state_reg;
 
+        send_en = 1'b0;
+        done_sig = 1'b0;
 
-	// output
-	assign xm = x_reg;
-	assign ym = y_reg;
-	assign button = button_reg;
-	assign send_en_out=send_en;
+        x_next = x_reg;
+        y_next = y_reg;
+        button_next = button_reg;
+
+        case (state_reg)
+            3'b000: begin // init
+                send_en = 1'b1;
+                state_next = 3'b001;
+            end
+            3'b001: // wait for send to complete
+                if (tx_done_sig)
+                    state_next = 3'b010;
+            3'b010: // wait for acknowledge packet
+                if (rx_done_sig)
+                    state_next = 3'b011;
+            3'b011: // wait for 1st data packet
+                if (rx_done_sig) begin
+                    state_next = 3'b100;
+                    y_next[8] = rx_data[5];
+                    x_next[8] = rx_data[4];
+                    button_next = rx_data[2:0];
+                    end
+            3'b100: // wait for 2nd data packet
+            if (rx_done_sig) begin
+                state_next = 3'b101;
+                x_next[7:0] = rx_data;
+            end
+            3'b101: // wait for 3rd data packet
+            if (rx_done_sig) begin
+                state_next = 3'b111;
+                y_next[7:0] = rx_data;
+                end
+            3'b111:
+            if (rx_done_sig) begin
+                state_next = 3'b110;
+            end
+            3'b110: begin // done
+                done_sig = 1'b1;
+                state_next = 3'b011;
+            end
+        endcase
+    end
 endmodule

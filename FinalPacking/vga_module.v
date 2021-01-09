@@ -48,6 +48,7 @@ module vga_module(
     wire [16:0] x_next;
     wire [16:0] y_next;
     wire [2:0] b_next;
+    reg do_something;
     
     assign x_next = (~done_sig) ? cursor_x : (mouse_x[7] == 0 ? (cursor_x[16:8] > 510 ? cursor_x : cursor_x + mouse_x[7:0]) : (cursor_x[16:8] < 2 ? cursor_x : cursor_x - ~{9'b111111111, mouse_x[7:0]} - 1));
     assign y_next = (~done_sig) ? cursor_y : (mouse_y[7] == 0 ? (cursor_y[16:8] < 2 ? cursor_y : cursor_y - mouse_y[7:0]) : (cursor_y[16:8] > 510 ? cursor_y : cursor_y + ~{9'b111111111, mouse_y[7:0]} + 1));
@@ -57,6 +58,7 @@ module vga_module(
             cursor_x <= 0;
             cursor_y <= 0;
             but_stat <= 0;
+            do_something <= 0;
         end
         else begin
             cursor_x <= x_next;
@@ -68,8 +70,8 @@ module vga_module(
     mouse mouse_inst(
         .clk(mouseClk),
         .reset(iRstN),
-        .ps2d(ps2data),
-        .ps2c(ps2clk),
+        .ps2data(ps2data),
+        .ps2clk(ps2clk),
         .xm(mouse_x),
         .ym(mouse_y),
         .button(button),
@@ -158,6 +160,8 @@ module vga_module(
             if (button[1] && !ori_image[{cursor_y[16:12], cursor_x[16:12]}]) begin
                 ori_image[{cursor_y[16:12], cursor_x[16:12]}] = 1;
             end
+            else
+                do_something = 1;
         end
         else begin
             oRed <= 4'b0010;
