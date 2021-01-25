@@ -2,13 +2,8 @@
 Digital Logic Lecture Final Project in the first term of year 2020-21
 
 ## Content
-Handwritting number distinguishing with CNN by Nexys 4 DDR in Verilog HDL.
+Handwritting number distinguishing with DNN by Nexys 4 DDR in Verilog HDL.
 
-## Data Type 
-bit float
-### 1 bit sign
-### (bit - 1) bit tail 
-### (bit)'b1000000000000000 means 1
 ## Data Addr
 
 block memory (128 * bit)b * 1165
